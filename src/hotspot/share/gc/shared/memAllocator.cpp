@@ -269,7 +269,7 @@ void MemAllocator::Allocation::notify_allocation() {
 
 HeapWord* MemAllocator::allocate_outside_tlab(Allocation& allocation) const {
   allocation._allocated_outside_tlab = true;
-  HeapWord* mem = _heap->mem_allocate(_word_size, &allocation._overhead_limit_exceeded);
+  HeapWord* mem = _heap->mem_allocate(_word_size, &allocation._overhead_limit_exceeded, this->_allocation_site);
   if (mem == NULL) {
     return mem;
   }

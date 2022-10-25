@@ -41,6 +41,7 @@ protected:
   Thread* const        _thread;
   Klass* const         _klass;
   const size_t         _word_size;
+  int                  _allocation_site;
 
 private:
   // Allocate from the current thread's TLAB, with broken-out slow path.
@@ -49,11 +50,12 @@ private:
   HeapWord* allocate_outside_tlab(Allocation& allocation) const;
 
 protected:
-  MemAllocator(Klass* klass, size_t word_size, Thread* thread)
+  MemAllocator(Klass* klass, size_t word_size, Thread* thread, int allocation_site = -1)
     : _heap(Universe::heap()),
       _thread(thread),
       _klass(klass),
-      _word_size(word_size)
+      _word_size(word_size),
+      _allocation_site(allocation_site)
   { }
 
   // This function clears the memory of the object
@@ -80,8 +82,8 @@ public:
 
 class ObjAllocator: public MemAllocator {
 public:
-  ObjAllocator(Klass* klass, size_t word_size, Thread* thread = Thread::current())
-    : MemAllocator(klass, word_size, thread) {}
+  ObjAllocator(Klass* klass, size_t word_size, Thread* thread = Thread::current(), int allocation_site = -1)
+    : MemAllocator(klass, word_size, thread, allocation_site) {}
   virtual oop initialize(HeapWord* mem) const;
 };
 
@@ -93,8 +95,8 @@ protected:
 
 public:
   ObjArrayAllocator(Klass* klass, size_t word_size, int length, bool do_zero,
-                    Thread* thread = Thread::current())
-    : MemAllocator(klass, word_size, thread),
+                    Thread* thread = Thread::current(), int allocation_site = -1)
+    : MemAllocator(klass, word_size, thread, allocation_site),
       _length(length),
       _do_zero(do_zero) {}
   virtual oop initialize(HeapWord* mem) const;

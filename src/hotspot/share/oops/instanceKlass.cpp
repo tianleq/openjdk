@@ -1209,7 +1209,7 @@ bool InstanceKlass::is_same_or_direct_interface(Klass *k) const {
   return false;
 }
 
-objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
+objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS, int allocation_site) {
   if (length < 0)  {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
   }
@@ -1249,13 +1249,15 @@ instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
   return h_i();
 }
 
-instanceOop InstanceKlass::allocate_instance(TRAPS) {
+instanceOop InstanceKlass::allocate_instance(TRAPS, int allocation_site) {
   bool has_finalizer_flag = has_finalizer(); // Query before possible GC
   int size = size_helper();  // Query before forming handle.
 
   instanceOop i;
 
-  i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
+  i = (instanceOop)Universe::heap()->obj_allocate(this, size, THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return NULL; (void)(0);
+  
   if (has_finalizer_flag && !RegisterFinalizersAtInit) {
     i = register_finalizer(i, CHECK_NULL);
   }

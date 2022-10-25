@@ -2155,19 +2155,19 @@ run:
             // allocations go through InterpreterRuntime::_new() if THREAD->tlab().allocate
             // returns NULL.
 #ifndef CC_INTERP_PROFILE
-            if (result == NULL) {
-              need_zero = true;
-              // Try allocate in shared eden
-            retry:
-              HeapWord* compare_to = *Universe::heap()->top_addr();
-              HeapWord* new_top = compare_to + obj_size;
-              if (new_top <= *Universe::heap()->end_addr()) {
-                if (Atomic::cmpxchg(new_top, Universe::heap()->top_addr(), compare_to) != compare_to) {
-                  goto retry;
-                }
-                result = (oop) compare_to;
-              }
-            }
+            // if (result == NULL) {
+            //   need_zero = true;
+            //   // Try allocate in shared eden
+            // retry:
+            //   HeapWord* compare_to = *Universe::heap()->top_addr();
+            //   HeapWord* new_top = compare_to + obj_size;
+            //   if (new_top <= *Universe::heap()->end_addr()) {
+            //     if (Atomic::cmpxchg(new_top, Universe::heap()->top_addr(), compare_to) != compare_to) {
+            //       goto retry;
+            //     }
+            //     result = (oop) compare_to;
+            //   }
+            // }
 #endif
             if (result != NULL) {
               // Initialize object (if nonzero size and need) and then the header
@@ -2194,7 +2194,8 @@ run:
           }
         }
         // Slow case allocation
-        CALL_VM(InterpreterRuntime::_new(THREAD, METHOD->constants(), index),
+        int allocation_site = ::mmtk_get_allocation_site(pc);
+        CALL_VM(InterpreterRuntime::_new(THREAD, METHOD->constants(), index, allocation_site),
                 handle_exception);
         // Must prevent reordering of stores for object initialization
         // with stores that publish the new object.
@@ -2206,7 +2207,8 @@ run:
       CASE(_anewarray): {
         u2 index = Bytes::get_Java_u2(pc+1);
         jint size = STACK_INT(-1);
-        CALL_VM(InterpreterRuntime::anewarray(THREAD, METHOD->constants(), index, size),
+        int allocation_site = ::mmtk_get_allocation_site(pc);
+        CALL_VM(InterpreterRuntime::anewarray(THREAD, METHOD->constants(), index, size, allocation_site),
                 handle_exception);
         // Must prevent reordering of stores for object initialization
         // with stores that publish the new object.
@@ -2222,8 +2224,9 @@ run:
         jint *dimarray =
                    (jint*)&topOfStack[dims * Interpreter::stackElementWords+
                                       Interpreter::stackElementWords-1];
+        int allocation_site = ::mmtk_get_allocation_site(pc);
         //adjust pointer to start of stack element
-        CALL_VM(InterpreterRuntime::multianewarray(THREAD, dimarray),
+        CALL_VM(InterpreterRuntime::multianewarray(THREAD, dimarray, allocation_site),
                 handle_exception);
         // Must prevent reordering of stores for object initialization
         // with stores that publish the new object.
@@ -2719,7 +2722,8 @@ run:
       CASE(_newarray): {
         BasicType atype = (BasicType) *(pc+1);
         jint size = STACK_INT(-1);
-        CALL_VM(InterpreterRuntime::newarray(THREAD, atype, size),
+        int allocation_site = ::mmtk_get_allocation_site(pc);
+        CALL_VM(InterpreterRuntime::newarray(THREAD, atype, size, allocation_site),
                 handle_exception);
         // Must prevent reordering of stores for object initialization
         // with stores that publish the new object.

@@ -36,6 +36,9 @@ class klassVtable;
 class ArrayKlass: public Klass {
   friend class VMStructs;
  private:
+#ifdef ZERO
+  int _padding;
+#endif
   // If you add a new field that points to any metaspace object, you
   // must add this field to ArrayKlass::metaspace_pointers_do().
   int      _dimension;         // This is n'th-dimensional array.
@@ -78,8 +81,8 @@ class ArrayKlass: public Klass {
   // Allocation
   // Sizes points to the first dimension of the array, subsequent dimensions
   // are always in higher memory.  The callers of these set that up.
-  virtual oop multi_allocate(int rank, jint* sizes, TRAPS);
-  objArrayOop allocate_arrayArray(int n, int length, TRAPS);
+  virtual oop multi_allocate(int rank, jint* sizes, TRAPS, int allocation_site = -1);
+  objArrayOop allocate_arrayArray(int n, int length, TRAPS, int allocation_site = -1);
 
   // find field according to JVM spec 5.4.3.2, returns the klass in which the field is defined
   Klass* find_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const;

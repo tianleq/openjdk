@@ -959,12 +959,12 @@ public:
     return (_annotations != NULL) ? _annotations->fields_type_annotations() : NULL;
   }
   // allocation
-  instanceOop allocate_instance(TRAPS);
+  instanceOop allocate_instance(TRAPS, int allocation_site = -1);
 
   // additional member function to return a handle
   instanceHandle allocate_instance_handle(TRAPS);
 
-  objArrayOop allocate_objArray(int n, int length, TRAPS);
+  objArrayOop allocate_objArray(int n, int length, TRAPS, int allocation_site = -1);
   // Helper function
   static instanceOop register_finalizer(instanceOop i, TRAPS);
 

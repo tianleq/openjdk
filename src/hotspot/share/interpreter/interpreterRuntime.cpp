@@ -214,7 +214,7 @@ IRT_END
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
 
-IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index))
+IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, int allocation_site))
   Klass* k = pool->klass_at(index, CHECK);
   InstanceKlass* klass = InstanceKlass::cast(k);
 
@@ -238,25 +238,28 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   //       Java).
   //       If we have a breakpoint, then we don't rewrite
   //       because the _breakpoint bytecode would be lost.
-  oop obj = klass->allocate_instance(CHECK);
+  oop obj = klass->allocate_instance(THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return ; (void)(0);
   thread->set_vm_result(obj);
 IRT_END
 
 
-IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
-  oop obj = oopFactory::new_typeArray(type, size, CHECK);
+IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size, int allocation_site))
+  oop obj = oopFactory::new_typeArray(type, size, THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return ; (void)(0);
   thread->set_vm_result(obj);
 IRT_END
 
 
-IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* pool, int index, jint size))
+IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* pool, int index, jint size, int allocation_site))
   Klass*    klass = pool->klass_at(index, CHECK);
-  objArrayOop obj = oopFactory::new_objArray(klass, size, CHECK);
+  objArrayOop obj = oopFactory::new_objArray(klass, size, THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return ; (void)(0);
   thread->set_vm_result(obj);
 IRT_END
 
 
-IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* first_size_address))
+IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* first_size_address, int allocation_site))
   // We may want to pass in more arguments - could make this slightly faster
   LastFrameAccessor last_frame(thread);
   ConstantPool* constants = last_frame.method()->constants();
@@ -279,7 +282,8 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* fir
     int n = Interpreter::local_offset_in_bytes(index)/jintSize;
     dims[index] = first_size_address[n];
   }
-  oop obj = ArrayKlass::cast(klass)->multi_allocate(nof_dims, dims, CHECK);
+  oop obj = ArrayKlass::cast(klass)->multi_allocate(nof_dims, dims, THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return ; (void)(0);
   thread->set_vm_result(obj);
 IRT_END
 

@@ -60,12 +60,12 @@ class oopFactory: AllStatic {
   static typeArrayOop    new_charArray           (const char* utf8_str,  TRAPS);
   static typeArrayOop    new_tenured_charArray(int length, TRAPS);
 
-  static typeArrayOop    new_typeArray(BasicType type, int length, TRAPS);
+  static typeArrayOop    new_typeArray(BasicType type, int length, TRAPS, int allocation_site = -1);
   static typeArrayOop    new_typeArray_nozero(BasicType type, int length, TRAPS);
   static typeArrayOop    new_symbolArray(int length, TRAPS);
 
   // Regular object arrays
-  static objArrayOop     new_objArray(Klass* klass, int length, TRAPS);
+  static objArrayOop     new_objArray(Klass* klass, int length, TRAPS,  int allocation_site = -1);
 
   // Helpers that return handles
   static objArrayHandle  new_objArray_handle(Klass* klass, int length, TRAPS);

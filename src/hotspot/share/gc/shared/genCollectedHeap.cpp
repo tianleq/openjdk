@@ -444,7 +444,8 @@ HeapWord* GenCollectedHeap::attempt_allocation(size_t size,
 }
 
 HeapWord* GenCollectedHeap::mem_allocate(size_t size,
-                                         bool* gc_overhead_limit_was_exceeded) {
+                                         bool* gc_overhead_limit_was_exceeded,
+                                         int allocation_site) {
   return mem_allocate_work(size,
                            false /* is_tlab */,
                            gc_overhead_limit_was_exceeded);

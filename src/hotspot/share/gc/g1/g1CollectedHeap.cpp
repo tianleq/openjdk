@@ -397,7 +397,8 @@ HeapWord* G1CollectedHeap::allocate_new_tlab(size_t min_size,
 
 HeapWord*
 G1CollectedHeap::mem_allocate(size_t word_size,
-                              bool*  gc_overhead_limit_was_exceeded) {
+                              bool*  gc_overhead_limit_was_exceeded,
+                              int allocation_site) {
   assert_heap_not_locked_and_not_at_safepoint();
 
   if (is_humongous(word_size)) {

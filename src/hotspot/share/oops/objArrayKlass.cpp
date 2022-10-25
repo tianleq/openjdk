@@ -169,12 +169,12 @@ int ObjArrayKlass::oop_size(oop obj) const {
   return objArrayOop(obj)->object_size();
 }
 
-objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
+objArrayOop ObjArrayKlass::allocate(int length, TRAPS, int allocation_site) {
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
       return (objArrayOop)Universe::heap()->array_allocate(this, size, length,
-                                                           /* do_zero */ true, THREAD);
+                                                           /* do_zero */ true, THREAD, allocation_site);
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
       JvmtiExport::post_array_size_exhausted();
@@ -187,13 +187,14 @@ objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
 
 static int multi_alloc_counter = 0;
 
-oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
+oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS, int allocation_site) {
   int length = *sizes;
   // Call to lower_dimension uses this pointer, so most be called before a
   // possible GC
   Klass* ld_klass = lower_dimension();
   // If length < 0 allocate will throw an exception.
-  objArrayOop array = allocate(length, CHECK_NULL);
+  objArrayOop array = allocate(length, THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return NULL; (void)(0);
   objArrayHandle h_array (THREAD, array);
   if (rank > 1) {
     if (length != 0) {

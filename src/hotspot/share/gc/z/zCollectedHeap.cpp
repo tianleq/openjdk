@@ -129,7 +129,7 @@ HeapWord* ZCollectedHeap::allocate_new_tlab(size_t min_size, size_t requested_si
   return (HeapWord*)addr;
 }
 
-HeapWord* ZCollectedHeap::mem_allocate(size_t size, bool* gc_overhead_limit_was_exceeded) {
+HeapWord* ZCollectedHeap::mem_allocate(size_t size, bool* gc_overhead_limit_was_exceeded, int allocation_site) {
   const size_t size_in_bytes = ZUtils::words_to_bytes(align_object_size(size));
   return (HeapWord*)_heap.alloc_object(size_in_bytes);
 }

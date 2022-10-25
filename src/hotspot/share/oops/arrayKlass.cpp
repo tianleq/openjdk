@@ -57,7 +57,7 @@ Klass* ArrayKlass::java_super() const {
 }
 
 
-oop ArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
+oop ArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS, int allocation_site) {
   ShouldNotReachHere();
   return NULL;
 }
@@ -130,7 +130,7 @@ bool ArrayKlass::compute_is_subtype_of(Klass* k) {
          || k == SystemDictionary::Serializable_klass();
 }
 
-objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS) {
+objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS, int allocation_site) {
   if (length < 0) {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
   }
@@ -143,7 +143,8 @@ objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS) {
   Klass* k = array_klass(n+dimension(), CHECK_0);
   ArrayKlass* ak = ArrayKlass::cast(k);
   objArrayOop o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length,
-                                                                /* do_zero */ true, CHECK_0);
+                                                                /* do_zero */ true, THREAD, allocation_site); 
+  if (HAS_PENDING_EXCEPTION) return 0; (void)(0);
   // initialization to NULL not necessary, area already cleared
   return o;
 }

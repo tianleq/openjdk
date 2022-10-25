@@ -431,7 +431,8 @@ private:
                                       size_t* actual_size);
 
   virtual HeapWord* mem_allocate(size_t word_size,
-                                 bool*  gc_overhead_limit_was_exceeded);
+                                 bool*  gc_overhead_limit_was_exceeded,
+                                 int allocation_site = -1);
 
   // First-level mutator allocation attempt: try to allocate out of
   // the mutator alloc region without taking the Heap_lock. This

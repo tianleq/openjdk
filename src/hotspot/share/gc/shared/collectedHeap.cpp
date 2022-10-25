@@ -447,13 +447,13 @@ HeapWord* CollectedHeap::allocate_new_tlab(size_t min_size,
   return NULL;
 }
 
-oop CollectedHeap::obj_allocate(Klass* klass, int size, TRAPS) {
-  ObjAllocator allocator(klass, size, THREAD);
+oop CollectedHeap::obj_allocate(Klass* klass, int size, TRAPS, int allocation_site) {
+  ObjAllocator allocator(klass, size, THREAD, allocation_site);
   return allocator.allocate();
 }
 
-oop CollectedHeap::array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS) {
-  ObjArrayAllocator allocator(klass, size, length, do_zero, THREAD);
+oop CollectedHeap::array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS, int allocation_site) {
+  ObjArrayAllocator allocator(klass, size, length, do_zero, THREAD, allocation_site);
   return allocator.allocate();
 }
 

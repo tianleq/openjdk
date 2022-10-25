@@ -157,7 +157,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // mem_allocate() should never be
   // called to allocate TLABs, only individual objects.
   virtual HeapWord* mem_allocate(size_t size,
-                                 bool* gc_overhead_limit_was_exceeded) = 0;
+                                 bool* gc_overhead_limit_was_exceeded,
+                                 int allocation_site = -1) = 0;
 
   // Filler object utilities.
   static inline size_t filler_array_hdr_size();
@@ -305,8 +306,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   }
   GCCause::Cause gc_cause() { return _gc_cause; }
 
-  virtual oop obj_allocate(Klass* klass, int size, TRAPS);
-  virtual oop array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS);
+  virtual oop obj_allocate(Klass* klass, int size, TRAPS, int allocation_site = -1);
+  virtual oop array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS, int allocation_site = -1);
   virtual oop class_allocate(Klass* klass, int size, TRAPS);
 
   // Utilities for turning raw memory into filler objects.

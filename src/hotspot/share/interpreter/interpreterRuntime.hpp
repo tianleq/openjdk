@@ -61,10 +61,10 @@ class InterpreterRuntime: AllStatic {
   static void    resolve_ldc   (JavaThread* thread, Bytecodes::Code bytecode);
 
   // Allocation
-  static void    _new          (JavaThread* thread, ConstantPool* pool, int index);
-  static void    newarray      (JavaThread* thread, BasicType type, jint size);
-  static void    anewarray     (JavaThread* thread, ConstantPool* pool, int index, jint size);
-  static void    multianewarray(JavaThread* thread, jint* first_size_address);
+  static void    _new          (JavaThread* thread, ConstantPool* pool, int index, int allocation_site);
+  static void    newarray      (JavaThread* thread, BasicType type, jint size, int allocation_site);
+  static void    anewarray     (JavaThread* thread, ConstantPool* pool, int index, jint size, int allocation_site);
+  static void    multianewarray(JavaThread* thread, jint* first_size_address, int allocation_site);
   static void    register_finalizer(JavaThread* thread, oopDesc* obj);
 
   // Quicken instance-of and check-cast bytecodes
