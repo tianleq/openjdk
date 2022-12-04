@@ -314,6 +314,11 @@ oop StringTable::intern(Handle string_or_null_h, jchar* name, int len, TRAPS) {
   unsigned int hash = java_lang_String::hash_code(name, len);
   oop found_string = StringTable::the_table()->lookup_shared(name, len, hash);
   if (found_string != NULL) {
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      ::mmtk_set_public_bit(Thread::current(), found_string, true);
+    }
+#endif
     return found_string;
   }
   if (StringTable::_alt_hash) {
@@ -321,10 +326,21 @@ oop StringTable::intern(Handle string_or_null_h, jchar* name, int len, TRAPS) {
   }
   found_string = StringTable::the_table()->do_lookup(name, len, hash);
   if (found_string != NULL) {
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      ::mmtk_set_public_bit(Thread::current(), found_string, true);
+    }
+#endif
     return found_string;
   }
-  return StringTable::the_table()->do_intern(string_or_null_h, name, len,
+  oop result = StringTable::the_table()->do_intern(string_or_null_h, name, len,
                                              hash, THREAD);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_set_public_bit(Thread::current(), result, true);
+  }
+#endif  
+  return result;
 }
 
 class StringTableCreateEntry : public StackObj {
