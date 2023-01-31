@@ -1214,7 +1214,7 @@ class JavaThread: public Thread {
   // Thread oop. threadObj() can be NULL for initial JavaThread
   // (or for threads attached via JNI)
   oop threadObj() const                          { return _threadObj; }
-  void set_threadObj(oop p)                      { _threadObj = p; }
+  void set_threadObj(oop p);
 
   ThreadPriority java_priority() const;          // Read from threadObj()
 

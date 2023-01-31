@@ -39,8 +39,11 @@
 
 class CollectedHeap;
 class DeferredObjAllocEvent;
-
-
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+extern "C" {
+  extern void mmtk_publish_object(void *object);
+}
+#endif
 // A helper class for caching a Method* when the user of the cache
 // only cares about the latest version of the Method*.  This cache safely
 // interacts with the RedefineClasses API.
@@ -318,10 +321,10 @@ class Universe: AllStatic {
     return check_mirror(_mirrors[t]);
   }
   static oop      main_thread_group()                 { return _main_thread_group; }
-  static void set_main_thread_group(oop group)        { _main_thread_group = group;}
+  static void set_main_thread_group(oop group);
 
   static oop      system_thread_group()               { return _system_thread_group; }
-  static void set_system_thread_group(oop group)      { _system_thread_group = group;}
+  static void set_system_thread_group(oop group);
 
   static objArrayOop  the_empty_class_klass_array ()  { return _the_empty_class_klass_array;   }
   static Array<Klass*>* the_array_interfaces_array() { return _the_array_interfaces_array;   }

@@ -78,9 +78,14 @@ inline void* ObjectMonitor::object_addr() {
   return (void *)(&_object);
 }
 
-inline void ObjectMonitor::set_object(void* obj) {
-  _object = obj;
-}
+// inline void ObjectMonitor::set_object(void* obj) {
+// #ifdef INCLUDE_THIRD_PARTY_HEAP
+//   if (UseThirdPartyHeap) {
+//     assert(::mmtk_is_object_published(obj), "object monitor is not published properly");
+//   }
+// #endif
+//   _object = obj;
+// }
 
 inline bool ObjectMonitor::check(TRAPS) {
   if (THREAD != _owner) {

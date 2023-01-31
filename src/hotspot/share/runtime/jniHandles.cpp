@@ -109,7 +109,13 @@ jobject JNIHandles::make_global(Handle obj, AllocFailType alloc_failmode) {
     // Return NULL on allocation failure.
     if (ptr != NULL) {
       assert(*ptr == NULL, "invariant");
-      NativeAccess<>::oop_store(ptr, obj());
+      oop p = obj();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(p);
+  }
+#endif
+      NativeAccess<>::oop_store(ptr, p);
       res = reinterpret_cast<jobject>(ptr);
     } else {
       report_handle_allocation_failure(alloc_failmode, "global");
@@ -133,7 +139,13 @@ jobject JNIHandles::make_weak_global(Handle obj, AllocFailType alloc_failmode) {
     // Return NULL on allocation failure.
     if (ptr != NULL) {
       assert(*ptr == NULL, "invariant");
-      NativeAccess<ON_PHANTOM_OOP_REF>::oop_store(ptr, obj());
+      oop p = obj();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(p);
+  }
+#endif
+      NativeAccess<ON_PHANTOM_OOP_REF>::oop_store(ptr, p);
       char* tptr = reinterpret_cast<char*>(ptr) + weak_tag_value;
       res = reinterpret_cast<jobject>(tptr);
     } else {

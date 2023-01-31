@@ -195,6 +195,13 @@ ClassLoaderData::ChunkedHandleList::~ChunkedHandleList() {
 }
 
 oop* ClassLoaderData::ChunkedHandleList::add(oop o) {
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(o);
+  }
+#endif
+
   if (_head == NULL || _head->_size == Chunk::CAPACITY) {
     Chunk* next = new Chunk(_head);
     OrderAccess::release_store(&_head, next);
