@@ -127,7 +127,7 @@ instanceOop MemoryManager::get_memory_manager_instance(TRAPS) {
       mgr_obj = mgr();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(mgr_obj);
+    ::mmtk_publish_object(Thread::current(), mgr_obj);
   }
 #endif
 

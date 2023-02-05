@@ -3177,7 +3177,7 @@ void JavaThread::set_threadObj(oop p) {
 // A thread cannot create itself, so by definition, they are public 
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(p);
+    if (p) ::mmtk_publish_object(Thread::current(), p);
   }
 #endif
   _threadObj = p; 
