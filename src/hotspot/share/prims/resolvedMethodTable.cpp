@@ -112,11 +112,6 @@ oop ResolvedMethodTable::basic_add(Method* method, Handle rmethod_name) {
   log_debug(membername, table) ("ResolvedMethod entry added for %s index %d",
                                  method->name_and_sig_as_C_string(), index);
   oop result = rmethod_name();
-// #ifdef INCLUDE_THIRD_PARTY_HEAP
-//   if (UseThirdPartyHeap) {
-//     ::mmtk_set_public_bit(Thread::current(), result, false);
-//   }
-// #endif
   return result;
 }
 

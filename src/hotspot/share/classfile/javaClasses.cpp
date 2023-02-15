@@ -3808,9 +3808,12 @@ oop java_lang_invoke_ResolvedMethodName::find_resolved_method(const methodHandle
     }
     oop new_resolved_method = k->allocate_instance(CHECK_NULL);
 #ifdef INCLUDE_THIRD_PARTY_HEAP
-  if (UseThirdPartyHeap) {
-    ::mmtk_set_public_bit(Thread::current(), new_resolved_method, false);
-  }
+    // resolved method oop will be added into the ResolvedMethodTable
+    // so need to publish it before it is added
+    // into the table
+    if (UseThirdPartyHeap) {
+      ::mmtk_set_public_bit(Thread::current(), new_resolved_method, false);
+    }
 #endif
     new_resolved_method->address_field_put(_vmtarget_offset, (address)m());
     // Add a reference to the loader (actually mirror because anonymous classes will not have
