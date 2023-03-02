@@ -128,7 +128,7 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
 
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), pool_obj);
+    ::mmtk_publish_object(pool_obj);
   }
 #endif
 
@@ -164,7 +164,7 @@ static void set_sensor_obj_at(SensorInfo** sensor_ptr, instanceHandle sh) {
   instanceOop s = sh();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), s);
+    ::mmtk_publish_object(s);
   }
 #endif
   sensor->set_sensor(s);

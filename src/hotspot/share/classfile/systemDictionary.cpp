@@ -138,7 +138,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
   oop java_system_loader = (oop)result.get_jobject();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), java_system_loader);
+    ::mmtk_publish_object(java_system_loader);
   }
 #endif
   _java_system_loader = java_system_loader;
@@ -151,7 +151,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
   oop java_platform_loader = (oop)result.get_jobject();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), java_platform_loader);
+    ::mmtk_publish_object(java_platform_loader);
   }
 #endif
   _java_platform_loader = java_platform_loader;
@@ -1921,7 +1921,7 @@ void SystemDictionary::initialize(TRAPS) {
   oop system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), system_loader_lock_obj);
+    ::mmtk_publish_object(system_loader_lock_obj);
   }
 #endif
   _system_loader_lock_obj = system_loader_lock_obj;
@@ -2708,7 +2708,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
       oop m = method_type();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
       if (UseThirdPartyHeap) {
-        ::mmtk_publish_object(Thread::current(), m);
+        ::mmtk_publish_object(m);
       }
 #endif
       spe->set_method_type(m);

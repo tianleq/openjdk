@@ -198,7 +198,7 @@ oop* ClassLoaderData::ChunkedHandleList::add(oop o) {
 
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), o);
+    ::mmtk_publish_object(o);
   }
 #endif
 

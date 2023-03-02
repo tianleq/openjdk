@@ -1090,7 +1090,7 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
     // so it needs to be published before writing to the constant pool
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(Thread::current(), new_result);
+    ::mmtk_publish_object(new_result);
   }
 #endif
     oop old_result = this_cp->resolved_references()
