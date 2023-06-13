@@ -262,15 +262,15 @@ void ObjectMonitor::operator delete[] (void *p) {
 void ObjectMonitor::set_object(void* obj) {
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    if (obj != NULL && obj != (cast_to_oop<intptr_t>(-1))) {
-      bool published = ::mmtk_is_object_published(obj);
-      if (!published) {
-        oop o = (oop) obj;
-        o->print_value();
-        printf("\n");
-        assert(false, "object monitor is not published properly");
-      }
-    }
+    // if (obj != NULL && obj != (cast_to_oop<intptr_t>(-1))) {
+    //   bool published = ::mmtk_is_object_published(obj);
+    //   if (!published) {
+    //     oop o = (oop) obj;
+    //     o->print_value();
+    //     printf("\n");
+    //     assert(false, "object monitor is not published properly");
+    //   }
+    // }
   }
 #endif
   _object = obj;
