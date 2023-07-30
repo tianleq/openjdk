@@ -248,14 +248,16 @@ class OopMapSet : public ResourceObj {
 
   // Iterates through frame for a compiled method
   static void oops_do            (const frame* fr,
-                                  const RegisterMap* reg_map, OopClosure* f);
+                                  const RegisterMap* reg_map, OopClosure* f,
+                                  JavaThread *jt);
   static void update_register_map(const frame* fr, RegisterMap *reg_map);
 
   // Iterates through frame for a compiled method for dead ones and values, too
   static void all_do(const frame* fr, const RegisterMap* reg_map,
                      OopClosure* oop_fn,
-                     void derived_oop_fn(oop* base, oop* derived),
-                     OopClosure* value_fn);
+                     void derived_oop_fn(oop* base, oop* derived, JavaThread *jt),
+                     OopClosure* value_fn,
+                     JavaThread *jt);
 
   // Printing
   void print_on(outputStream* st) const;
@@ -469,6 +471,24 @@ class DerivedPointerTableDeactivate: public StackObj {
     }
   }
 };
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+class ThreadlocalDerivedPointerTable : public CHeapObj<mtCompiler> {
+  friend class VMStructs;
+ private:
+  GrowableArray<DerivedPointerEntry*>* _list;
+  bool _active;                      // do not record pointers for verify pass etc.
+ public:
+  ThreadlocalDerivedPointerTable();
+  void clear();                       // Called before scavenge/GC
+  void add(oop *derived, oop *base);  // Called during scavenge/GC
+  void update_pointers();             // Called after  scavenge/GC
+  bool is_empty()                     { return _list == NULL || _list->is_empty(); }
+  bool is_active()                    { return _active; }
+  void set_active(bool value)         { _active = value; }
+  ~ThreadlocalDerivedPointerTable();
+};
+#endif
 #endif // COMPILER2_OR_JVMCI
 
 #endif // SHARE_VM_COMPILER_OOPMAP_HPP

@@ -964,10 +964,10 @@ void frame::oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, 
   finder.oops_do();
 }
 
-void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* reg_map) {
+void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* reg_map, JavaThread *owner) {
   assert(_cb != NULL, "sanity check");
   if (_cb->oop_maps() != NULL) {
-    OopMapSet::oops_do(this, reg_map, f);
+    OopMapSet::oops_do(this, reg_map, f, owner);
 
     // Preserve potential arguments for a callee. We handle this by dispatching
     // on the codeblob. For c2i, we do
@@ -1103,7 +1103,7 @@ void frame::oops_entry_do(OopClosure* f, const RegisterMap* map) {
 }
 
 
-void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache) {
+void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache, JavaThread *owner) {
 #ifndef PRODUCT
 #if defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x5140
 #pragma error_messages(off, SEC_NULL_PTR_DEREF)
@@ -1119,7 +1119,7 @@ void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* ma
   } else if (is_entry_frame()) {
     oops_entry_do(f, map);
   } else if (CodeCache::contains(pc())) {
-    oops_code_blob_do(f, cf, map);
+    oops_code_blob_do(f, cf, map, owner);
   } else {
     ShouldNotReachHere();
   }

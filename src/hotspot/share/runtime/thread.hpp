@@ -663,6 +663,8 @@ protected:
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   third_party_heap::MutatorContext third_party_heap_mutator;
   void* third_party_heap_collector = NULL;
+  Monitor* third_party_heap_local_gc_lock;
+  ThreadlocalDerivedPointerTable* ldpt;
   static ByteSize third_party_heap_mutator_offset() { return byte_offset_of(Thread, third_party_heap_mutator); }
 #endif
 

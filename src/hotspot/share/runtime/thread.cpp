@@ -320,6 +320,12 @@ Thread::Thread() {
     barrier_set->on_thread_create(this);
   }
 
+  #ifdef INCLUDE_THIRD_PARTY_HEAP
+  third_party_heap_local_gc_lock = new Monitor(Mutex::nonleaf, "ThirdPartyLocalGC_Lock", true,
+                                               Monitor::_safepoint_check_sometimes);
+  ldpt =  new ThreadlocalDerivedPointerTable();
+  #endif
+
   MACOS_AARCH64_ONLY(DEBUG_ONLY(_wx_init = false));
 }
 
@@ -459,6 +465,13 @@ Thread::~Thread() {
   // needs to happen before os::free_thread()
   delete _SR_lock;
   _SR_lock = NULL;
+
+  #ifdef INCLUDE_THIRD_PARTY_HEAP
+  delete third_party_heap_local_gc_lock;
+  third_party_heap_local_gc_lock = NULL;
+  delete ldpt;
+  ldpt = NULL;
+  #endif
 
   // osthread() can be NULL, if creation of thread failed.
   if (osthread() != NULL) os::free_thread(osthread());
@@ -2927,7 +2940,7 @@ void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
 
     // Traverse the execution stack
     for (StackFrameStream fst(this); !fst.is_done(); fst.next()) {
-      fst.current()->oops_do(f, cf, fst.register_map());
+      fst.current()->oops_do(f, cf, fst.register_map(), this);
     }
   }
 

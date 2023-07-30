@@ -344,7 +344,7 @@ bool ReferenceToThreadRootClosure::do_thread_stack_detailed(JavaThread* jt) {
 
     // Traverse the execution stack
     for (StackFrameStream fst(jt); !fst.is_done(); fst.next()) {
-      fst.current()->oops_do(&rcl, NULL, fst.register_map());
+      fst.current()->oops_do(&rcl, NULL, fst.register_map(), jt);
     }
 
   } // last java frame

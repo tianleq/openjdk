@@ -374,13 +374,13 @@ class frame {
   void oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f);
 
   // Iteration of oops
-  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache);
+  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache, JavaThread *owner = NULL);
   void oops_entry_do(OopClosure* f, const RegisterMap* map);
-  void oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* map);
+  void oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* map, JavaThread *owner);
   int adjust_offset(Method* method, int index); // helper for above fn
  public:
   // Memory management
-  void oops_do(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map) { oops_do_internal(f, cf, map, true); }
+  void oops_do(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, JavaThread *owner = NULL) { oops_do_internal(f, cf, map, true, owner); }
   void nmethods_do(CodeBlobClosure* cf);
 
   // RedefineClasses support for finding live interpreted methods on the stack

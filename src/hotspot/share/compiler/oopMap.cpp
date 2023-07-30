@@ -247,13 +247,18 @@ OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   return m;
 }
 
-static void add_derived_oop(oop* base, oop* derived) {
+static void add_derived_oop(oop* base, oop* derived, JavaThread *jt) {
 #if !defined(TIERED) && !INCLUDE_JVMCI
   COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
 #if COMPILER2_OR_JVMCI
   DerivedPointerTable::add(derived, base);
 #endif // COMPILER2_OR_JVMCI
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (jt) {
+
+  }
+#endif
 }
 
 
@@ -285,15 +290,15 @@ static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
 }
 #endif // PRODUCT
 
-void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f) {
+void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f, JavaThread *jt) {
   // add derived oops to a table
-  all_do(fr, reg_map, f, add_derived_oop, &do_nothing_cl);
+  all_do(fr, reg_map, f, add_derived_oop, &do_nothing_cl, jt);
 }
 
 
 void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
-                       OopClosure* oop_fn, void derived_oop_fn(oop*, oop*),
-                       OopClosure* value_fn) {
+                       OopClosure* oop_fn, void derived_oop_fn(oop*, oop*, JavaThread *),
+                       OopClosure* value_fn, JavaThread *jt) {
   CodeBlob* cb = fr->cb();
   assert(cb != NULL, "no codeblob");
 
@@ -335,7 +340,7 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
       // The narrow_oop_base could be NULL or be the address
       // of the page below heap depending on compressed oops mode.
       if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
-        derived_oop_fn(base_loc, derived_loc);
+        derived_oop_fn(base_loc, derived_loc, jt);
       }
     }
   }
@@ -787,5 +792,88 @@ void DerivedPointerTable::update_pointers() {
   _list->clear();
   _active = false;
 }
+
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+
+ThreadlocalDerivedPointerTable::ThreadlocalDerivedPointerTable(): _active(false), _list(new (ResourceObj::C_HEAP, mtCompiler) GrowableArray<DerivedPointerEntry*>(10, true)) {}
+
+
+void ThreadlocalDerivedPointerTable::clear() {
+  // The first time, we create the list.  Otherwise it should be
+  // empty.  If not, then we have probably forgotton to call
+  // update_pointers after last GC/Scavenge.
+  assert (!this->_active, "should not be active");
+  assert(this->_list == NULL || _list->length() == 0, "table not empty");
+  if (this->_list == NULL) {
+    this->_list = new (ResourceObj::C_HEAP, mtCompiler) GrowableArray<DerivedPointerEntry*>(10, true); // Allocated on C heap
+  }
+  this->_active = true;
+}
+
+
+void ThreadlocalDerivedPointerTable::add(oop *derived_loc, oop *base_loc) {
+  assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop");
+  assert(derived_loc != base_loc, "Base and derived in same location");
+  if (_active) {
+    assert(*derived_loc != (oop)base_loc, "location already added");
+    assert(_list != NULL, "list must exist");
+    intptr_t offset = value_of_loc(derived_loc) - value_of_loc(base_loc);
+    // This assert is invalid because derived pointers can be
+    // arbitrarily far away from their base.
+    // assert(offset >= -1000000, "wrong derived pointer info");
+
+    if (TraceDerivedPointers) {
+      tty->print_cr(
+        "Add derived pointer@" INTPTR_FORMAT
+        " - Derived: " INTPTR_FORMAT
+        " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: " INTX_FORMAT ")",
+        p2i(derived_loc), p2i((address)*derived_loc), p2i((address)*base_loc), p2i(base_loc), offset
+      );
+    }
+    // Set derived oop location to point to base.
+    *derived_loc = (oop)base_loc;
+
+    DerivedPointerEntry *entry = new DerivedPointerEntry(derived_loc, offset);
+    this->_list->append(entry);
+  }
+}
+
+
+void ThreadlocalDerivedPointerTable::update_pointers() {
+  assert(this->_list != NULL, "list must exist");
+  for(int i = 0; i < this->_list->length(); i++) {
+    DerivedPointerEntry* entry = this->_list->at(i);
+    oop* derived_loc = entry->location();
+    intptr_t offset  = entry->offset();
+    // The derived oop was setup to point to location of base
+    oop  base        = **(oop**)derived_loc;
+    assert(Universe::heap()->is_in_or_null(base), "must be an oop");
+
+    *derived_loc = (oop)(((address)base) + offset);
+    assert(value_of_loc(derived_loc) - value_of_loc(&base) == offset, "sanity check");
+
+    if (TraceDerivedPointers) {
+      tty->print_cr("Updating derived pointer@" INTPTR_FORMAT
+                    " - Derived: " INTPTR_FORMAT "  Base: " INTPTR_FORMAT " (Offset: " INTX_FORMAT ")",
+          p2i(derived_loc), p2i((address)*derived_loc), p2i((address)base), offset);
+    }
+
+    // Delete entry
+    delete entry;
+    this->_list->at_put(i, NULL);
+  }
+  // Clear list, so it is ready for next traversal (this is an invariant)
+  if (TraceDerivedPointers && !_list->is_empty()) {
+    tty->print_cr("--------------------------");
+  }
+  this->_list->clear();
+  this->_active = false;
+}
+
+ThreadlocalDerivedPointerTable::~ThreadlocalDerivedPointerTable() {
+  delete this->_list;
+}
+#endif
 
 #endif // COMPILER2_OR_JVMCI
