@@ -323,8 +323,9 @@ oop StringTable::intern(Handle string_or_null_h, jchar* name, int len, TRAPS) {
   if (found_string != NULL) {
     return found_string;
   }
-  return StringTable::the_table()->do_intern(string_or_null_h, name, len,
+  oop result = StringTable::the_table()->do_intern(string_or_null_h, name, len,
                                              hash, THREAD);
+  return result;
 }
 
 class StringTableCreateEntry : public StackObj {
@@ -361,6 +362,11 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
   } else {
     string_h = java_lang_String::create_from_unicode(name, len, CHECK_NULL);
   }
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(string_h());
+  }
+#endif
 
   // Deduplicate the string before it is interned. Note that we should never
   // deduplicate a string after it has been interned. Doing so will counteract

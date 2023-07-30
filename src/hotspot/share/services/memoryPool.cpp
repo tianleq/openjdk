@@ -126,6 +126,12 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
       // Get the address of the object we created via call_special.
       pool_obj = pool();
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(pool_obj);
+  }
+#endif
+
       // Use store barrier to make sure the memory accesses associated
       // with creating the pool are visible before publishing its address.
       // The unlock will publish the store to _memory_pool_obj because
@@ -155,7 +161,13 @@ void MemoryPool::record_peak_memory_usage() {
 static void set_sensor_obj_at(SensorInfo** sensor_ptr, instanceHandle sh) {
   assert(*sensor_ptr == NULL, "Should be called only once");
   SensorInfo* sensor = new SensorInfo();
-  sensor->set_sensor(sh());
+  instanceOop s = sh();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(s);
+  }
+#endif
+  sensor->set_sensor(s);
   *sensor_ptr = sensor;
 }
 

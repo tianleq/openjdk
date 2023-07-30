@@ -135,16 +135,26 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
                          vmSymbols::getSystemClassLoader_name(),
                          vmSymbols::void_classloader_signature(),
                          CHECK);
-
-  _java_system_loader = (oop)result.get_jobject();
+  oop java_system_loader = (oop)result.get_jobject();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(java_system_loader);
+  }
+#endif
+  _java_system_loader = java_system_loader;
 
   JavaCalls::call_static(&result,
                          class_loader_klass,
                          vmSymbols::getPlatformClassLoader_name(),
                          vmSymbols::void_classloader_signature(),
                          CHECK);
-
-  _java_platform_loader = (oop)result.get_jobject();
+  oop java_platform_loader = (oop)result.get_jobject();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(java_platform_loader);
+  }
+#endif
+  _java_platform_loader = java_platform_loader;
 }
 
 ClassLoaderData* SystemDictionary::register_loader(Handle class_loader) {
@@ -1910,7 +1920,14 @@ void SystemDictionary::initialize(TRAPS) {
   _pd_cache_table = new ProtectionDomainCacheTable(defaultProtectionDomainCacheSize);
 
   // Allocate private object used as system class loader lock
-  _system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
+  oop system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(system_loader_lock_obj);
+  }
+#endif
+  _system_loader_lock_obj = system_loader_lock_obj;
+
   // Initialize basic classes
   resolve_well_known_classes(CHECK);
 }
@@ -2688,7 +2705,15 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
     if (spe == NULL)
       spe = invoke_method_table()->add_entry(index, hash, signature, null_iid);
     if (spe->method_type() == NULL) {
-      spe->set_method_type(method_type());
+      // This is the only call site of set_method_type
+      // so it is safe to publish here
+      oop m = method_type();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+      if (UseThirdPartyHeap) {
+        ::mmtk_publish_object(m);
+      }
+#endif
+      spe->set_method_type(m);
     }
   }
 

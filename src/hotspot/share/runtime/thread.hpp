@@ -1219,7 +1219,7 @@ class JavaThread: public Thread {
   // Thread oop. threadObj() can be NULL for initial JavaThread
   // (or for threads attached via JNI)
   oop threadObj() const                          { return _threadObj; }
-  void set_threadObj(oop p)                      { _threadObj = p; }
+  void set_threadObj(oop p);
 
   ThreadPriority java_priority() const;          // Read from threadObj()
 
@@ -2200,6 +2200,7 @@ class Threads: AllStatic {
   static void initialize_jsr292_core_classes(TRAPS);
 
  public:
+  static inline JavaThread* get_thread_list() { return _thread_list; }
   // Thread management
   // force_daemon is a concession to JNI, where we may need to add a
   // thread to the thread list before allocating its thread object

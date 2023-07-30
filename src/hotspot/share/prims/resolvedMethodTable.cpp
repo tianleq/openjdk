@@ -111,7 +111,8 @@ oop ResolvedMethodTable::basic_add(Method* method, Handle rmethod_name) {
   ResourceMark rm;
   log_debug(membername, table) ("ResolvedMethod entry added for %s index %d",
                                  method->name_and_sig_as_C_string(), index);
-  return rmethod_name();
+  oop result = rmethod_name();
+  return result;
 }
 
 ResolvedMethodTable* ResolvedMethodTable::_the_table = NULL;

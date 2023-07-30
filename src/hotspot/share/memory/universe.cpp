@@ -397,7 +397,13 @@ void Universe::genesis(TRAPS) {
 
   {
     Handle tns = java_lang_String::create_from_str("<null_sentinel>", CHECK);
-    _the_null_sentinel = tns();
+    oop p = tns();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      ::mmtk_publish_object(p);
+    }
+#endif
+    _the_null_sentinel = p;
   }
 
   // Maybe this could be lifted up now that object array can be initialized
@@ -476,6 +482,8 @@ void Universe::initialize_basic_type_mirrors(TRAPS) {
     } else
 #endif
     {
+       // The following global roots have been published already
+       // because they are class oops
       _int_mirror     =
         java_lang_Class::create_basic_type_mirror("int",    T_INT, CHECK);
       _float_mirror   =
@@ -550,6 +558,11 @@ oop Universe::reference_pending_list() {
 
 void Universe::set_reference_pending_list(oop list) {
   assert_pll_ownership();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      ::mmtk_publish_object(list);
+    }
+#endif
   _reference_pending_list = list;
 }
 
@@ -560,6 +573,11 @@ bool Universe::has_reference_pending_list() {
 
 oop Universe::swap_reference_pending_list(oop list) {
   assert_pll_locked(is_locked);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      ::mmtk_publish_object(list);
+    }
+#endif
   return Atomic::xchg(list, &_reference_pending_list);
 }
 
@@ -1014,8 +1032,140 @@ bool universe_post_init() {
   }
 
   HandleMark hm(THREAD);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  // Setup preallocated empty java.lang.Class array
+  objArrayOop the_empty_class_klass_array = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_false);
+  // Setup preallocated OutOfMemoryError errors
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_OutOfMemoryError(), true, CHECK_false);
+  InstanceKlass* ik = InstanceKlass::cast(k);
+  instanceOop out_of_memory_error_java_heap = ik->allocate_instance(CHECK_false);
+  instanceOop out_of_memory_error_metaspace = ik->allocate_instance(CHECK_false);
+  instanceOop out_of_memory_error_class_metaspace = ik->allocate_instance(CHECK_false);
+  instanceOop out_of_memory_error_array_size = ik->allocate_instance(CHECK_false);
+  instanceOop out_of_memory_error_gc_overhead_limit = ik->allocate_instance(CHECK_false);
+  instanceOop out_of_memory_error_realloc_objects = ik->allocate_instance(CHECK_false);
+  oop delayed_stack_overflow_error_message = NULL;
+  // Setup preallocated cause message for delayed StackOverflowError
+  if (StackReservedPages > 0) {
+    delayed_stack_overflow_error_message =
+      java_lang_String::create_oop_from_str("Delayed StackOverflowError due to ReservedStackAccess annotated method", CHECK_false);
+  }
+
+  // Setup preallocated NullPointerException
+  // (this is currently used for a cheap & dirty solution in compiler exception handling)
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_NullPointerException(), true, CHECK_false);
+  instanceOop null_ptr_exception_instance = InstanceKlass::cast(k)->allocate_instance(CHECK_false);
+  // Setup preallocated ArithmeticException
+  // (this is currently used for a cheap & dirty solution in compiler exception handling)
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_ArithmeticException(), true, CHECK_false);
+  instanceOop arithmetic_exception_instance = InstanceKlass::cast(k)->allocate_instance(CHECK_false);
+  // Virtual Machine Error for when we get into a situation we can't resolve
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_VirtualMachineError(), true, CHECK_false);
+  bool linked = InstanceKlass::cast(k)->link_class_or_fail(CHECK_false);
+  if (!linked) {
+     tty->print_cr("Unable to link/verify VirtualMachineError class");
+     return false; // initialization failed
+  }
+  instanceOop virtual_machine_error_instance = InstanceKlass::cast(k)->allocate_instance(CHECK_false);
+
+  instanceOop vm_exception = InstanceKlass::cast(k)->allocate_instance(CHECK_false);
+
+  // Setup the array of errors that have preallocated backtrace
+  k = out_of_memory_error_java_heap->klass();
+  assert(k->name() == vmSymbols::java_lang_OutOfMemoryError(), "should be out of memory error");
+  ik = InstanceKlass::cast(k);
+
+  int len = (StackTraceInThrowable) ? (int)PreallocatedOutOfMemoryErrorCount : 0;
+  objArrayOop preallocated_out_of_memory_error_array = oopFactory::new_objArray(ik, len, CHECK_false);
+
+  if (UseThirdPartyHeap) {
+    // publish root objects
+    ::mmtk_publish_object(the_empty_class_klass_array);
+    ::mmtk_publish_object(out_of_memory_error_java_heap);
+    ::mmtk_publish_object(out_of_memory_error_metaspace);
+    ::mmtk_publish_object(out_of_memory_error_class_metaspace);
+    ::mmtk_publish_object(delayed_stack_overflow_error_message);
+    ::mmtk_publish_object(out_of_memory_error_array_size);
+    ::mmtk_publish_object(out_of_memory_error_gc_overhead_limit);
+    ::mmtk_publish_object(out_of_memory_error_realloc_objects);
+
+    ::mmtk_publish_object(null_ptr_exception_instance);
+    ::mmtk_publish_object(arithmetic_exception_instance);
+    ::mmtk_publish_object(virtual_machine_error_instance);
+    ::mmtk_publish_object(vm_exception);
+    ::mmtk_publish_object(preallocated_out_of_memory_error_array);
+  }
+  Universe::_the_empty_class_klass_array = the_empty_class_klass_array;
+  Universe::_out_of_memory_error_java_heap = out_of_memory_error_java_heap;
+  Universe::_out_of_memory_error_metaspace = out_of_memory_error_metaspace;
+  Universe::_out_of_memory_error_class_metaspace = out_of_memory_error_class_metaspace;
+  Universe::_out_of_memory_error_array_size = out_of_memory_error_array_size;
+  Universe::_out_of_memory_error_gc_overhead_limit = out_of_memory_error_gc_overhead_limit;
+  Universe::_out_of_memory_error_realloc_objects = out_of_memory_error_realloc_objects;
+  Universe::_preallocated_out_of_memory_error_array = preallocated_out_of_memory_error_array;
+  Universe::_delayed_stack_overflow_error_message = delayed_stack_overflow_error_message;
+  Universe::_null_ptr_exception_instance = null_ptr_exception_instance;
+  
+  Universe::_arithmetic_exception_instance = arithmetic_exception_instance;
+  // Virtual Machine Error for when we get into a situation we can't resolve
+  Universe::_virtual_machine_error_instance = virtual_machine_error_instance;
+  Universe::_vm_exception = vm_exception;
+
+  Handle msg = java_lang_String::create_from_str("Java heap space", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_out_of_memory_error_java_heap, msg());
+
+  msg = java_lang_String::create_from_str("Metaspace", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_out_of_memory_error_metaspace, msg());
+  msg = java_lang_String::create_from_str("Compressed class space", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_out_of_memory_error_class_metaspace, msg());
+
+  msg = java_lang_String::create_from_str("Requested array size exceeds VM limit", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_out_of_memory_error_array_size, msg());
+
+  msg = java_lang_String::create_from_str("GC overhead limit exceeded", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_out_of_memory_error_gc_overhead_limit, msg());
+
+  msg = java_lang_String::create_from_str("Java heap space: failed reallocation of scalar replaced objects", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_out_of_memory_error_realloc_objects, msg());
+
+  msg = java_lang_String::create_from_str("/ by zero", CHECK_false);
+  java_lang_Throwable::set_message(Universe::_arithmetic_exception_instance, msg());
+
+  // // Setup the array of errors that have preallocated backtrace
+  // k = Universe::_out_of_memory_error_java_heap->klass();
+  // assert(k->name() == vmSymbols::java_lang_OutOfMemoryError(), "should be out of memory error");
+  // ik = InstanceKlass::cast(k);
+
+  // int len = (StackTraceInThrowable) ? (int)PreallocatedOutOfMemoryErrorCount : 0;
+  // Universe::_preallocated_out_of_memory_error_array = oopFactory::new_objArray(ik, len, CHECK_false);
+  for (int i=0; i<len; i++) {
+    oop err = ik->allocate_instance(CHECK_false);
+    Handle err_h = Handle(THREAD, err);
+    java_lang_Throwable::allocate_backtrace(err_h, CHECK_false);
+    Universe::preallocated_out_of_memory_errors()->obj_at_put(i, err_h());
+  }
+  Universe::_preallocated_out_of_memory_error_avail_count = (jint)len;
+
+  Universe::initialize_known_methods(CHECK_false);
+
+  // This needs to be done before the first scavenge/gc, since
+  // it's an input to soft ref clearing policy.
+  {
+    MutexLocker x(Heap_lock);
+    Universe::update_heap_info_at_gc();
+  }
+
+  // ("weak") refs processing infrastructure initialization
+  Universe::heap()->post_initialize();
+
+  MemoryService::add_metaspace_memory_pools();
+
+  MemoryService::set_universe_heap(Universe::heap());
+#else
+
   // Setup preallocated empty java.lang.Class array
   Universe::_the_empty_class_klass_array = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_false);
+
 
   // Setup preallocated OutOfMemoryError errors
   Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_OutOfMemoryError(), true, CHECK_false);
@@ -1105,6 +1255,7 @@ bool universe_post_init() {
   MemoryService::add_metaspace_memory_pools();
 
   MemoryService::set_universe_heap(Universe::heap());
+#endif
 #if INCLUDE_CDS
   MetaspaceShared::post_initialize(CHECK_false);
 #endif
@@ -1264,6 +1415,25 @@ void Universe::verify(VerifyOption option, const char* prefix) {
   _verify_in_progress = false;
 }
 
+void Universe::set_main_thread_group(oop group)        
+{ 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(group);
+  }
+#endif
+  _main_thread_group = group;
+}
+
+void Universe::set_system_thread_group(oop group)      
+{ 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(group);
+  }
+#endif
+  _system_thread_group = group;
+}
 
 #ifndef PRODUCT
 void Universe::calculate_verify_data(HeapWord* low_boundary, HeapWord* high_boundary) {

@@ -125,6 +125,11 @@ instanceOop MemoryManager::get_memory_manager_instance(TRAPS) {
 
       // Get the address of the object we created via call_special.
       mgr_obj = mgr();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(mgr_obj);
+  }
+#endif
 
       // Use store barrier to make sure the memory accesses associated
       // with creating the management object are visible before publishing

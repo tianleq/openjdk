@@ -3183,6 +3183,17 @@ const char* JavaThread::get_parent_name() const {
   return NULL;
 }
 
+void JavaThread::set_threadObj(oop p) {
+// thread oop needs to be published by default.
+// A thread cannot create itself, so by definition, they are public 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    if (p) ::mmtk_publish_object(p);
+  }
+#endif
+  _threadObj = p; 
+}
+
 ThreadPriority JavaThread::java_priority() const {
   oop thr_oop = threadObj();
   if (thr_oop == NULL) return NormPriority; // Bootstrapping

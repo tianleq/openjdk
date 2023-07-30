@@ -1086,6 +1086,13 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
     // It doesn't matter which racing thread wins, as long as only one
     // result is used by all threads, and all future queries.
     oop new_result = (result_oop == NULL ? Universe::the_null_sentinel() : result_oop);
+    // because of the benign race here, the new_result will probably be shared between threads
+    // so it needs to be published before writing to the constant pool
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object(new_result);
+  }
+#endif
     oop old_result = this_cp->resolved_references()
       ->atomic_compare_exchange_oop(cache_index, new_result, NULL);
     if (old_result == NULL) {
@@ -1140,6 +1147,11 @@ oop ConstantPool::resolve_bootstrap_specifier_at_impl(const constantPoolHandle& 
   objArrayHandle info;
   {
     objArrayOop info_oop = oopFactory::new_objArray(SystemDictionary::Object_klass(), 2, CHECK_NULL);
+  // #ifdef INCLUDE_THIRD_PARTY_HEAP
+  //   if (UseThirdPartyHeap) {
+  //     ::mmtk_set_public_bit(THREAD, info_oop, false);
+  //   }
+  // #endif
     info = objArrayHandle(THREAD, info_oop);
   }
 
@@ -1201,6 +1213,11 @@ oop ConstantPool::resolve_bootstrap_specifier_at_impl(const constantPoolHandle& 
   if (!use_BSCI) {
     // return {bsm, {arg...}}; resolution of arguments is done immediately, before JDK code is called
     objArrayOop args_oop = oopFactory::new_objArray(SystemDictionary::Object_klass(), argc, CHECK_NULL);
+// #ifdef INCLUDE_THIRD_PARTY_HEAP
+//     if (UseThirdPartyHeap) {
+//       ::mmtk_set_public_bit(THREAD, args_oop, false);
+//     }
+// #endif
     info->obj_at_put(1, args_oop);   // may overwrite with args[0] below
     objArrayHandle args(THREAD, args_oop);
     copy_bootstrap_arguments_at_impl(this_cp, index, 0, argc, args, 0, true, Handle(), CHECK_NULL);

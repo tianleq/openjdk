@@ -1595,6 +1595,20 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
                "oop must be found in exactly one place");
         if (r->oop_is_immediate() && r->oop_value() != NULL) {
           f->do_oop(r->oop_addr());
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+          if (UseThirdPartyHeap) {
+            oop obj = *(r->oop_addr());
+            if (obj != NULL) {
+              bool published = ::mmtk_is_object_published(obj);
+              if (!published) {
+                oop o = (oop) obj;
+                o->print_value();
+                printf("\n");
+                assert(false, "objects leak in nmethod");
+              }
+            }
+          }
+#endif
         }
 #ifdef INCLUDE_THIRD_PARTY_HEAP
         if (UseThirdPartyHeap) {
@@ -1612,6 +1626,20 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
   for (oop* p = oops_begin(); p < oops_end(); p++) {
     if (*p == Universe::non_oop_word())  continue;  // skip non-oops
     f->do_oop(p);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      oop obj = *p;
+      if (obj != NULL) {
+        bool published = ::mmtk_is_object_published(obj);
+        if (!published) {
+          oop o = (oop) obj;
+          o->print_value();
+          printf("\n");
+          assert(false, "objects leak in nmethod");
+        }
+      }
+    }
+#endif
   }
 }
 
