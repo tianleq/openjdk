@@ -42,6 +42,7 @@ class DeferredObjAllocEvent;
 #ifdef INCLUDE_THIRD_PARTY_HEAP
 extern "C" {
   extern void mmtk_publish_object(void *object);
+  extern void mmtk_publish_object_with_fence(void *object);
 }
 #endif
 // A helper class for caching a Method* when the user of the cache

@@ -1237,7 +1237,7 @@ instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   // FIXME: Switch to openjdk style finalizer processing
   if (UseThirdPartyHeap) {
-    third_party_heap::register_finalizer((void*) i);
+    third_party_heap::register_finalizer((void*) i, THREAD);
     return h_i();
   }
 #endif

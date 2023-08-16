@@ -247,18 +247,20 @@ OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   return m;
 }
 
-static void add_derived_oop(oop* base, oop* derived, JavaThread *jt) {
+static void add_derived_oop(oop* base, oop* derived, JavaThread* jt) {
 #if !defined(TIERED) && !INCLUDE_JVMCI
   COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (jt->mmtk_thread_local_gc_active()) {
+    assert(!DerivedPointerTable::is_active(), "Global DerivedPointerTable is not deactived");
+    jt->ldpt->add(derived, base);
+  }
+#endif
 #if COMPILER2_OR_JVMCI
   DerivedPointerTable::add(derived, base);
 #endif // COMPILER2_OR_JVMCI
-#ifdef INCLUDE_THIRD_PARTY_HEAP
-  if (jt) {
 
-  }
-#endif
 }
 
 
@@ -800,14 +802,10 @@ ThreadlocalDerivedPointerTable::ThreadlocalDerivedPointerTable(): _active(false)
 
 
 void ThreadlocalDerivedPointerTable::clear() {
-  // The first time, we create the list.  Otherwise it should be
-  // empty.  If not, then we have probably forgotton to call
-  // update_pointers after last GC/Scavenge.
+  // It should be empty. If not, then we have probably 
+  // forgotton to call update_pointers after last GC/Scavenge.
   assert (!this->_active, "should not be active");
-  assert(this->_list == NULL || _list->length() == 0, "table not empty");
-  if (this->_list == NULL) {
-    this->_list = new (ResourceObj::C_HEAP, mtCompiler) GrowableArray<DerivedPointerEntry*>(10, true); // Allocated on C heap
-  }
+  assert( _list->length() == 0, "table not empty");
   this->_active = true;
 }
 

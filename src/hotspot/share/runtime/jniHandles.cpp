@@ -112,7 +112,7 @@ jobject JNIHandles::make_global(Handle obj, AllocFailType alloc_failmode) {
       oop p = obj();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(p);
+    ::mmtk_publish_object_with_fence(p);
   }
 #endif
       NativeAccess<>::oop_store(ptr, p);
@@ -142,7 +142,7 @@ jobject JNIHandles::make_weak_global(Handle obj, AllocFailType alloc_failmode) {
       oop p = obj();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(p);
+    ::mmtk_publish_object_with_fence(p);
   }
 #endif
       NativeAccess<ON_PHANTOM_OOP_REF>::oop_store(ptr, p);

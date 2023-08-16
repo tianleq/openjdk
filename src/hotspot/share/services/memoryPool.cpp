@@ -164,7 +164,7 @@ static void set_sensor_obj_at(SensorInfo** sensor_ptr, instanceHandle sh) {
   instanceOop s = sh();
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(s);
+    ::mmtk_publish_object_with_fence(s);
   }
 #endif
   sensor->set_sensor(s);

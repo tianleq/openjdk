@@ -364,7 +364,7 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
   }
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
-    ::mmtk_publish_object(string_h());
+    ::mmtk_publish_object_with_fence(string_h());
   }
 #endif
 
