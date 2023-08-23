@@ -1873,7 +1873,25 @@ void CompileBroker::compiler_thread_loop() {
       if (method()->number_of_breakpoints() == 0) {
         // Compile the method.
         if ((UseCompiler || AlwaysCompileLoopMethods) && CompileBroker::should_compile_new_jobs()) {
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+          if (UseThirdPartyHeap) {
+            MutexLocker locker(third_party_heap_local_gc_active_lock);
+            third_party_heap_compilation_requested = true;
+            while (third_party_heap_active_local_gc_count > 0) {
+              third_party_heap_local_gc_active_lock->wait();
+            }
+            --third_party_heap_active_local_gc_count;
+          }
+#endif
           invoke_compiler_on_method(task);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+          if (UseThirdPartyHeap) {
+            MutexLocker locker(third_party_heap_local_gc_active_lock);
+            third_party_heap_compilation_requested = false;
+            ++third_party_heap_active_local_gc_count;
+            if (!third_party_heap_active_local_gc_count) third_party_heap_local_gc_active_lock->notify_all();
+          }
+#endif
           thread->start_idle_timer();
         } else {
           // After compilation is disabled, remove remaining methods from queue

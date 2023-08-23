@@ -1438,6 +1438,14 @@ void Deoptimization::deoptimize_frame(JavaThread* thread, intptr_t* id, DeoptRea
   if (thread == Thread::current()) {
     Deoptimization::deoptimize_frame_internal(thread, id, reason);
   } else {
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      MutexLockerEx locker(thread->third_party_heap_local_gc_lock, true);
+      while (thread->third_party_heap_mutator.thread_local_gc_status == LOCAL_GC_ACTIVE) {
+        thread->third_party_heap_local_gc_lock->wait();
+      } 
+    }
+#endif
     VM_DeoptimizeFrame deopt(thread, id, reason);
     VMThread::execute(&deopt);
   }
