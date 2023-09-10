@@ -1053,6 +1053,12 @@ void ciEnv::register_method(ciMethod* target,
       nm->set_rtm_state(rtm_state);
 #endif
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+      // See if there are private objects get leaked
+      DoNothingClosure cl;
+      nm->oops_do(&cl);
+#endif
+
       // Record successful registration.
       // (Put nm into the task handle *before* publishing to the Java heap.)
       if (task() != NULL) {

@@ -1603,8 +1603,8 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
               if (!published) {
                 oop o = (oop) obj;
                 o->print_value();
-                printf("\n");
-                assert(false, "objects leak in nmethod");
+                printf("\n object leaks in JIT compiler thread\n");
+                ::mmtk_inc_leak_count();
               }
             }
           }
@@ -1614,6 +1614,17 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
         if (UseThirdPartyHeap) {
           if (narrowOop* narrow_oop_slot = r->narrow_oop_slot()) {
             f->do_oop((narrowOop*) narrow_oop_slot);
+            narrowOop heap_oop = RawAccess<>::oop_load(narrow_oop_slot);
+            if (!CompressedOops::is_null(heap_oop)) {
+              oop obj = CompressedOops::decode_not_null(heap_oop);
+              bool published = ::mmtk_is_object_published(obj);
+              if (!published) {
+                oop o = (oop) obj;
+                o->print_value();
+                printf("\n object leaks in JIT compiler thread\n");
+                ::mmtk_inc_leak_count();
+              }
+            }
           }
         }
 #endif
@@ -1634,8 +1645,8 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
         if (!published) {
           oop o = (oop) obj;
           o->print_value();
-          printf("\n");
-          assert(false, "objects leak in nmethod");
+          printf("\n object leaks in JIT compiler thread\n");
+          ::mmtk_inc_leak_count();
         }
       }
     }
