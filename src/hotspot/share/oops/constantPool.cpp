@@ -1147,11 +1147,6 @@ oop ConstantPool::resolve_bootstrap_specifier_at_impl(const constantPoolHandle& 
   objArrayHandle info;
   {
     objArrayOop info_oop = oopFactory::new_objArray(SystemDictionary::Object_klass(), 2, CHECK_NULL);
-  // #ifdef INCLUDE_THIRD_PARTY_HEAP
-  //   if (UseThirdPartyHeap) {
-  //     ::mmtk_set_public_bit(THREAD, info_oop, false);
-  //   }
-  // #endif
     info = objArrayHandle(THREAD, info_oop);
   }
 
@@ -1213,11 +1208,6 @@ oop ConstantPool::resolve_bootstrap_specifier_at_impl(const constantPoolHandle& 
   if (!use_BSCI) {
     // return {bsm, {arg...}}; resolution of arguments is done immediately, before JDK code is called
     objArrayOop args_oop = oopFactory::new_objArray(SystemDictionary::Object_klass(), argc, CHECK_NULL);
-// #ifdef INCLUDE_THIRD_PARTY_HEAP
-//     if (UseThirdPartyHeap) {
-//       ::mmtk_set_public_bit(THREAD, args_oop, false);
-//     }
-// #endif
     info->obj_at_put(1, args_oop);   // may overwrite with args[0] below
     objArrayHandle args(THREAD, args_oop);
     copy_bootstrap_arguments_at_impl(this_cp, index, 0, argc, args, 0, true, Handle(), CHECK_NULL);

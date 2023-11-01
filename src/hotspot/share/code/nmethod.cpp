@@ -1603,8 +1603,8 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
               if (!published) {
                 oop o = (oop) obj;
                 o->print_value();
-                printf("\n object leaks in JIT compiler thread\n");
-                ::mmtk_inc_leak_count();
+                printf("\n callsite: 1, object leaks in JIT compiler thread\n");
+                ::mmtk_inc_leak_count(1);
               }
             }
           }
@@ -1621,8 +1621,8 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
               if (!published) {
                 oop o = (oop) obj;
                 o->print_value();
-                printf("\n object leaks in JIT compiler thread\n");
-                ::mmtk_inc_leak_count();
+                printf("\n callsite: 2, object leaks in JIT compiler thread\n");
+                ::mmtk_inc_leak_count(2);
               }
             }
           }
@@ -1645,8 +1645,8 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
         if (!published) {
           oop o = (oop) obj;
           o->print_value();
-          printf("\n object leaks in JIT compiler thread\n");
-          ::mmtk_inc_leak_count();
+          printf("\ncallsite: 3, object leaks in JIT compiler thread\n");
+          ::mmtk_inc_leak_count(3);
         }
       }
     }

@@ -3814,7 +3814,7 @@ oop java_lang_invoke_ResolvedMethodName::find_resolved_method(const methodHandle
     // so need to publish it before it is added
     // into the table
     if (UseThirdPartyHeap) {
-      ::mmtk_set_public_bit(new_resolved_method);
+      ::mmtk_publish_object_with_fence(new_resolved_method);
     }
 #endif
     new_resolved_method->address_field_put(_vmtarget_offset, (address)m());
