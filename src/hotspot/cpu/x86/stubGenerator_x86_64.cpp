@@ -1873,6 +1873,9 @@ class StubGenerator: public StubCodeGenerator {
   //   c_rarg0   - source array address
   //   c_rarg1   - destination array address
   //   c_rarg2   - element count, treated as ssize_t, can be zero
+  // The following are available when using THIRD_PARTY_HEAP
+  //   c_rarg3   - source array oop
+  //   c_rarg4   - destination array oop
   //
   // If 'from' and/or 'to' are aligned on 4-byte boundaries, we let
   // the hardware handle it.  The two dwords within qwords that span
@@ -1898,6 +1901,12 @@ class StubGenerator: public StubCodeGenerator {
     const Register end_to      = to;   // destination array end address
     // End pointers are inclusive, and if count is not zero they point
     // to the last unit copied:  end_to[0] := end_from[0]
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // src is in c_rarg3 and dst is in c_rarg4, 
+    // they are set up in all callsites of this stub (disjoint_int_oop_copy)
+    const Register src = rscratch1;
+    const Register dst = rscratch2;
+#endif
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
@@ -1921,7 +1930,20 @@ class StubGenerator: public StubCodeGenerator {
 
     BasicType type = is_oop ? T_OBJECT : T_INT;
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (bs->use_oop_arraycopy_prologue()) {
+      // rscratch1(r10) and rscratch2(r11) are free to use here
+      assert_different_registers(src, dst, from, to, count);
+      __ mov(src, c_rarg3);
+      __ mov(dst, c_rarg4);
+      bs->oop_arraycopy_prologue(_masm, decorators, type, src, dst, from, to, count);
+    } else {
+      bs->arraycopy_prologue(_masm, decorators, type, from, to, count);
+    }
+#else
     bs->arraycopy_prologue(_masm, decorators, type, from, to, count);
+#endif
+    
 
     // 'from', 'to' and 'count' are now valid
     __ movptr(dword_count, count);
@@ -1992,6 +2014,13 @@ class StubGenerator: public StubCodeGenerator {
     const Register dword_count = rcx;
     const Register qword_count = count;
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // src is in c_rarg3 and dst is in c_rarg4, 
+    // they are set up in all callsites of this stub (conjoint_int_oop_copy)
+    const Register src = rscratch1;
+    const Register dst = rscratch2;
+#endif
+
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
@@ -2015,8 +2044,21 @@ class StubGenerator: public StubCodeGenerator {
 
     BasicType type = is_oop ? T_OBJECT : T_INT;
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (bs->use_oop_arraycopy_prologue()) {
+      // rscratch1(r10) and rscratch2(r11) are free to use here
+      __ mov(src, c_rarg3);
+      __ mov(dst, c_rarg4);
+      // no registers are destroyed by this call
+      bs->oop_arraycopy_prologue(_masm, decorators, type, src, dst, from, to, count);
+    } else {
+      bs->arraycopy_prologue(_masm, decorators, type, from, to, count);
+    }
+#else
     // no registers are destroyed by this call
     bs->arraycopy_prologue(_masm, decorators, type, from, to, count);
+#endif
+
 
     assert_clean_int(count, rax); // Make sure 'count' is clean int.
     // 'from', 'to' and 'count' are now valid
@@ -2095,6 +2137,13 @@ class StubGenerator: public StubCodeGenerator {
     // End pointers are inclusive, and if count is not zero they point
     // to the last unit copied:  end_to[0] := end_from[0]
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // src is in c_rarg3 and dst is in c_rarg4, 
+    // they are set up in all callsites of this stub (disjoint_long_oop_copy)
+    const Register src = rscratch1;
+    const Register dst = rscratch2;
+#endif
+
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     // Save no-overlap entry point for generate_conjoint_long_oop_copy()
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
@@ -2119,7 +2168,18 @@ class StubGenerator: public StubCodeGenerator {
 
     BasicType type = is_oop ? T_OBJECT : T_LONG;
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (bs->use_oop_arraycopy_prologue()) {
+      __ mov(src, c_rarg3);
+      __ mov(dst, c_rarg4);
+      bs->oop_arraycopy_prologue(_masm, decorators, type, src, dst, from, to, qword_count);
+    } else {
+      bs->arraycopy_prologue(_masm, decorators, type, from, to, qword_count);
+    }
+#else
     bs->arraycopy_prologue(_masm, decorators, type, from, to, qword_count);
+#endif
+    
 
     // Copy from low to high addresses.  Use 'to' as scratch.
     __ lea(end_from, Address(from, qword_count, Address::times_8, -8));
@@ -2188,6 +2248,13 @@ class StubGenerator: public StubCodeGenerator {
     const Register qword_count = rdx;  // elements count
     const Register saved_count = rcx;
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // src is in c_rarg3 and dst is in c_rarg4  arrayoops, 
+    // they are set up in all callsites of this stub (conjoint_long_oop_copy)
+    const Register src = rscratch1;
+    const Register dst = rscratch2;
+#endif
+
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
@@ -2212,8 +2279,17 @@ class StubGenerator: public StubCodeGenerator {
 
     BasicType type = is_oop ? T_OBJECT : T_LONG;
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (bs->use_oop_arraycopy_prologue()) {
+      __ mov(src, c_rarg3);
+      __ mov(dst, c_rarg4);
+      bs->oop_arraycopy_prologue(_masm, decorators, type, src, dst, from, to, qword_count);
+    } else {
+      bs->arraycopy_prologue(_masm, decorators, type, from, to, qword_count);
+    }
+#else
     bs->arraycopy_prologue(_masm, decorators, type, from, to, qword_count);
-
+#endif
     __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
@@ -2286,6 +2362,9 @@ class StubGenerator: public StubCodeGenerator {
   //    c_rarg4   - oop ckval (super_klass)
   // Win64
   //    rsp+40    - oop ckval (super_klass)
+  // The following exists only when using THIRD_PARTY_HEAP
+  //    c_rarg5   - srouce array object
+  //    rsp+16    - destination array object
   //
   //  Output:
   //    rax ==  0  -  success
@@ -2302,6 +2381,14 @@ class StubGenerator: public StubCodeGenerator {
     const Register length      = rdx;   // elements count
     const Register ckoff       = rcx;   // super_check_offset
     const Register ckval       = r8;    // super_klass
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    const Register src         = rscratch1;
+    const Register dst         = rscratch2;
+    // because r13 and r14 are also spilled, the location of dst will be rsp+32 
+    // but rbp is fixed, so use rbp here
+    const Address  dst_addr    = Address(rbp, 2 * wordSize);
+#endif
 
     // Registers used as temps (r13, r14 are save-on-entry)
     const Register end_from    = from;  // source array end address
@@ -2392,8 +2479,19 @@ class StubGenerator: public StubCodeGenerator {
 
     BasicType type = T_OBJECT;
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (bs->use_oop_arraycopy_prologue()) {
+      // rscratch1(r10) and rscratch2(r11) are free to use here
+      __ movptr(src, c_rarg5);
+      __ movptr(dst, dst_addr);
+      bs->oop_arraycopy_prologue(_masm, decorators, type, src, dst, from, to, count);
+    } else {
+      bs->arraycopy_prologue(_masm, decorators, type, from, to, count);
+    }
+#else
     bs->arraycopy_prologue(_masm, decorators, type, from, to, count);
-
+#endif
+   
     // Copy from low to high addresses, indexed from the end of each array.
     __ lea(end_from, end_from_addr);
     __ lea(end_to,   end_to_addr);
@@ -2585,10 +2683,17 @@ class StubGenerator: public StubCodeGenerator {
     const Register src_pos    = c_rarg1;  // source position
     const Register dst        = c_rarg2;  // destination array oop
     const Register dst_pos    = c_rarg3;  // destination position
+
 #ifndef _WIN64
     const Register length     = c_rarg4;
 #else
     const Address  length(rsp, 6 * wordSize);  // elements count is on stack on Win64
+#endif
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    //save src and dst on the stack, as they are needed by certain barriers
+    const Address src_addr(rsp, 1 * wordSize); 
+    const Address dst_addr(rsp, 0 * wordSize); 
 #endif
 
     { int modulus = CodeEntryAlignment;
@@ -2802,12 +2907,24 @@ class StubGenerator: public StubCodeGenerator {
     arraycopy_range_checks(src, src_pos, dst, dst_pos, r11_length,
                            r10, L_failed);
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // spill src and dst as they are needed
+    __ push(src);
+    __ push(dst);
+#endif
+
     __ lea(from, Address(src, src_pos, TIMES_OOP,
                  arrayOopDesc::base_offset_in_bytes(T_OBJECT))); // src_addr
     __ lea(to,   Address(dst, dst_pos, TIMES_OOP,
                  arrayOopDesc::base_offset_in_bytes(T_OBJECT))); // dst_addr
     __ movl2ptr(count, r11_length); // length
   __ BIND(L_plain_copy);
+  
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // At this stage, c_rarg3 and c_rarg4 should be free
+    __ movptr(c_rarg3, src_addr); // store dst to c_rarg3
+    __ movptr(c_rarg4, dst_addr); // store src to c_rarg4
+#endif
     __ jump(RuntimeAddress(oop_copy_entry));
 
   __ BIND(L_checkcast_copy);
@@ -2824,6 +2941,11 @@ class StubGenerator: public StubCodeGenerator {
       const Register r11_dst_klass = r11;
       __ load_klass(r11_dst_klass, dst); // reload
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    // spill src and dst as they are needed
+    __ push(src);
+    __ push(dst);
+#endif
       // Marshal the base address arguments now, freeing registers.
       __ lea(from, Address(src, src_pos, TIMES_OOP,
                    arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
@@ -2852,6 +2974,18 @@ class StubGenerator: public StubCodeGenerator {
       // Set up arguments for checkcast_copy_entry.
       setup_arg_regs(4);
       __ movptr(r8, r11_dst_klass);  // dst.klass.element_klass, r8 is c_rarg4 on Linux/Solaris
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+      // also needs to pass src and dst to the stub checkcast_copy_entry
+      // Need to make sure dst is in the same stack location when checkcast_arraycopy has its own frame
+      __ movptr(c_rarg5, src_addr);
+      __ subptr(rsp, 2 * wordSize);
+      // Now dst is in rsp+16
+      { Label L;
+      array_overlap_test(L, TIMES_OOP);
+      __ stop("generic_copy checkcast_copy within a single array");
+      __ bind(L);
+      }
+#endif
       __ jump(RuntimeAddress(checkcast_copy_entry));
     }
 

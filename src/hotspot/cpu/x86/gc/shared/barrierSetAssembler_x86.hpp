@@ -43,6 +43,17 @@ public:
                                   Register src, Register dst, Register count) {}
   virtual void arraycopy_epilogue(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                                   Register src, Register dst, Register count) {}
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  virtual void oop_arraycopy_prologue(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
+                                      Register src_oop, Register dst_oop, Register src, Register dst, Register count) {}
+  virtual void oop_arraycopy_epilogue(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
+                                      Register src_oop, Register dst_oop, Register src, Register dst, Register count) {}
+  // To pass the extra arguments to `oop_arraycopy_prologue`, the code assembler will have to spill or move data to some registers.
+  // Setting this flag off will completely disable `oop_arraycopy_prologue` as well as the spill and move cost.
+  virtual bool use_oop_arraycopy_prologue() const {
+    return false;
+  }
+#endif
 
   virtual void load_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                        Register dst, Address src, Register tmp1, Register tmp_thread);

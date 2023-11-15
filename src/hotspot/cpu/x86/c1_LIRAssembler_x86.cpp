@@ -3381,7 +3381,23 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
         __ load_klass(c_rarg4, dst);
         __ movptr(c_rarg4, Address(c_rarg4, ObjArrayKlass::element_klass_offset()));
         __ movl(c_rarg3, Address(c_rarg4, Klass::super_check_offset_offset()));
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+
+        assert_different_registers(rax, c_rarg0, c_rarg1, c_rarg2, c_rarg3, c_rarg4, c_rarg5);
+        // Now checkcast_arraycopy stub has 7 arguments, 
+        // so the last argument has to be passed through stack
+        __ movptr(c_rarg5, Address(rsp, 4*BytesPerWord)); // move src to c_rarg5
+        __ movptr(rax, Address(rsp, 0*BytesPerWord));
+        // Allocate abi space for args but be sure to keep stack aligned
+        __ subptr(rsp, 2*wordSize);
+        store_parameter(rax, 0);
+#endif // INCLUDE_THIRD_PARTY_HEAP
         __ call(RuntimeAddress(copyfunc_addr));
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+        __ addptr(rsp, 2*wordSize);
+#endif // INCLUDE_THIRD_PARTY_HEAP
+
 #endif
 
 #endif
@@ -3476,10 +3492,24 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
 
 #ifdef _LP64
   assert_different_registers(c_rarg0, dst, dst_pos, length);
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  // spill src and dst as they will be overwritten
+  store_parameter(dst, 0);
+  store_parameter(src, 4);
+#endif
+
   __ lea(c_rarg0, Address(src, src_pos, scale, arrayOopDesc::base_offset_in_bytes(basic_type)));
   assert_different_registers(c_rarg1, length);
   __ lea(c_rarg1, Address(dst, dst_pos, scale, arrayOopDesc::base_offset_in_bytes(basic_type)));
   __ mov(c_rarg2, length);
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  // c_rarg3 is src  
+  // c_rarg4 is dst
+  __ movptr(c_rarg3, Address(rsp, 4*BytesPerWord));
+  __ movptr(c_rarg4, Address(rsp, 0*BytesPerWord));
+#endif
 
 #else
   __ lea(tmp, Address(src, src_pos, scale, arrayOopDesc::base_offset_in_bytes(basic_type)));
