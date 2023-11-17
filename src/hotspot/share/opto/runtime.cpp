@@ -696,15 +696,38 @@ const TypeFunc* OptoRuntime::void_long_Type() {
 // arraycopy stub variations:
 enum ArrayCopyType {
   ac_fast,                      // void(ptr, ptr, size_t)
-  ac_checkcast,                 //  int(ptr, ptr, size_t, size_t, ptr)
+  ac_checkcast,                 //  int(ptr, ptr, size_t, size_t, ptr) or int(ptr, ptr, size_t, size_t, ptr, ptr, ptr)
   ac_slow,                      // void(ptr, int, ptr, int, int)
-  ac_generic                    //  int(ptr, int, ptr, int, int)
+  ac_generic,                    //  int(ptr, int, ptr, int, int)
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  ac_fast_oop,                  // void(ptr, ptr, size_t, ptr, ptr)
+  #endif
 };
 
 static const TypeFunc* make_arraycopy_Type(ArrayCopyType act) {
   // create input type (domain)
   int num_args      = (act == ac_fast ? 3 : 5);
   int num_size_args = (act == ac_fast ? 1 : act == ac_checkcast ? 2 : 0);
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  bool use_oop_arraycopy_prologue = BarrierSet::barrier_set()->barrier_set_assembler()->use_oop_arraycopy_prologue();
+  if (use_oop_arraycopy_prologue) {
+    switch (act)
+    {
+    case ac_fast_oop:
+      num_size_args = 1;
+      assert(num_args == 5 && num_size_args == 1, "ac_fast_oop has wrong number of args");
+      break;
+    case ac_checkcast:
+      num_args += 2;
+      assert(num_args == 7 && num_size_args == 2, "ac_checkcast has wrong number of args");
+    default:
+      break;
+    }
+    // num_args += (act == ac_checkcast || act == ac_fast_oop ? 2 : 0);
+  }
+#endif
+
   int argcnt = num_args;
   LP64_ONLY(argcnt += num_size_args); // halfwords for lengths
   const Type** fields = TypeTuple::fields(argcnt);
@@ -724,7 +747,20 @@ static const TypeFunc* make_arraycopy_Type(ArrayCopyType act) {
   }
   if (act == ac_checkcast) {
     fields[argp++] = TypePtr::NOTNULL;  // super_klass
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (use_oop_arraycopy_prologue) {
+    fields[argp++] = TypePtr::NOTNULL;  // src oop
+    fields[argp++] = TypePtr::NOTNULL;  // dst oop
   }
+#endif
+  }
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (act == ac_fast_oop) {
+    assert(use_oop_arraycopy_prologue, "ac_fast_oop should use oop_arraycopy_prologue");
+    fields[argp++] = TypePtr::NOTNULL;  // src oop
+    fields[argp++] = TypePtr::NOTNULL;  // dst oop
+  }
+#endif
   assert(argp == TypeFunc::Parms+argcnt, "correct decoding of act");
   const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
 
@@ -744,6 +780,35 @@ const TypeFunc* OptoRuntime::fast_arraycopy_Type() {
   return make_arraycopy_Type(ac_fast);
 }
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+const TypeFunc* OptoRuntime::fast_oop_arraycopy_Type() {
+  // // create input type (domain)
+  // int num_args      = 4;
+  // int num_size_args = 1;
+  // int argcnt = num_args;
+  // LP64_ONLY(argcnt += num_size_args); // halfwords for lengths
+  // const Type** fields = TypeTuple::fields(argcnt);
+  // int argp = TypeFunc::Parms;
+  // fields[argp++] = TypePtr::NOTNULL;    // src
+  // fields[argp++] = TypePtr::NOTNULL;    // dest
+  // while (num_size_args-- > 0) {
+  //   fields[argp++] = TypeX_X;               // size in whatevers (size_t)
+  //   LP64_ONLY(fields[argp++] = Type::HALF); // other half of long length
+  // }
+  // fields[argp++] = TypePtr::NOTNULL;    // dest object
+  // assert(argp == TypeFunc::Parms+argcnt, "correct decoding of act");
+  // const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
+
+  // // create result type if needed
+  // int retcnt = 0;
+  // fields = TypeTuple::fields(1);
+  // fields[TypeFunc::Parms+0] = NULL; // void
+  // const TypeTuple* range = TypeTuple::make(TypeFunc::Parms+retcnt, fields);
+  // return TypeFunc::make(domain, range);
+  return make_arraycopy_Type(ac_fast_oop);
+}
+#endif
+
 const TypeFunc* OptoRuntime::checkcast_arraycopy_Type() {
   // An extension of fast_arraycopy_Type which adds type checking.
   return make_arraycopy_Type(ac_checkcast);
@@ -759,7 +824,6 @@ const TypeFunc* OptoRuntime::generic_arraycopy_Type() {
   // This signature is like System.arraycopy, except that it returns status.
   return make_arraycopy_Type(ac_generic);
 }
-
 
 const TypeFunc* OptoRuntime::array_fill_Type() {
   const Type** fields;

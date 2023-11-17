@@ -77,7 +77,8 @@ public:
                        Node* parm0 = NULL, Node* parm1 = NULL,
                        Node* parm2 = NULL, Node* parm3 = NULL,
                        Node* parm4 = NULL, Node* parm5 = NULL,
-                       Node* parm6 = NULL, Node* parm7 = NULL);
+                       Node* parm6 = NULL, Node* parm7 = NULL,
+                       Node* parm8 = NULL);
 
   address basictype2arraycopy(BasicType t,
                               Node* src_offset,

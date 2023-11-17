@@ -3387,6 +3387,8 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
         assert_different_registers(rax, c_rarg0, c_rarg1, c_rarg2, c_rarg3, c_rarg4, c_rarg5);
         // Now checkcast_arraycopy stub has 7 arguments, 
         // so the last argument has to be passed through stack
+        // c2 is using c calling convention, so need to make sure 
+        // it is observed here as well
         __ movptr(c_rarg5, Address(rsp, 4*BytesPerWord)); // move src to c_rarg5
         __ movptr(rax, Address(rsp, 0*BytesPerWord));
         // Allocate abi space for args but be sure to keep stack aligned

@@ -267,6 +267,11 @@ private:
 
   // arraycopy routine types
   static const TypeFunc* fast_arraycopy_Type(); // bit-blasters
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  static const TypeFunc* fast_oop_arraycopy_Type();
+#endif
+
   static const TypeFunc* checkcast_arraycopy_Type();
   static const TypeFunc* generic_arraycopy_Type();
   static const TypeFunc* slow_arraycopy_Type();   // the full routine

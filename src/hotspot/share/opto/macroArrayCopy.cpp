@@ -76,7 +76,8 @@ Node* PhaseMacroExpand::make_leaf_call(Node* ctrl, Node* mem,
                                        Node* parm0, Node* parm1,
                                        Node* parm2, Node* parm3,
                                        Node* parm4, Node* parm5,
-                                       Node* parm6, Node* parm7) {
+                                       Node* parm6, Node* parm7,
+                                       Node* parm8) {
   int size = call_type->domain()->cnt();
   Node* call = new CallLeafNoFPNode(call_type, call_addr, call_name, adr_type);
   call->init_req(TypeFunc::Control, ctrl);
@@ -94,7 +95,8 @@ Node* PhaseMacroExpand::make_leaf_call(Node* ctrl, Node* mem,
   if (parm5 != NULL) { call->init_req(TypeFunc::Parms+5, parm5);
   if (parm6 != NULL) { call->init_req(TypeFunc::Parms+6, parm6);
   if (parm7 != NULL) { call->init_req(TypeFunc::Parms+7, parm7);
-    /* close each nested if ===> */  } } } } } } } }
+  if (parm8 != NULL) { call->init_req(TypeFunc::Parms+8, parm8);
+    /* close each nested if ===> */  } } } } } } } } }
   assert(call->in(call->req()-1) != NULL, "must initialize all parms");
 
   return call;
@@ -464,7 +466,7 @@ Node* PhaseMacroExpand::generate_arraycopy(ArrayCopyNode *ac, AllocateArrayNode*
         Node* local_ctrl = *ctrl, *local_io = *io;
         MergeMemNode* local_mem = MergeMemNode::make(mem);
         transform_later(local_mem);
-
+        assert(basic_elem_type != T_ARRAY, "$$$$");
         didit = generate_block_arraycopy(&local_ctrl, &local_mem, local_io,
                                          adr_type, basic_elem_type, alloc,
                                          src, src_offset, dest, dest_offset,
@@ -1038,8 +1040,21 @@ Node* PhaseMacroExpand::generate_checkcast_arraycopy(Node** ctrl, MergeMemNode**
   Node* dest_start = array_element_address(dest, dest_offset, T_OBJECT);
 
   const TypeFunc* call_type = OptoRuntime::checkcast_arraycopy_Type();
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  Node* call;
+  if (BarrierSet::barrier_set()->barrier_set_assembler()->use_oop_arraycopy_prologue()) {
+    call = make_leaf_call(*ctrl, *mem, call_type, copyfunc_addr, "checkcast_arraycopy", adr_type,
+                              src_start, dest_start, copy_length XTOP, check_offset XTOP, check_value,
+                              src, dest);
+  } else {
+    call = make_leaf_call(*ctrl, *mem, call_type, copyfunc_addr, "checkcast_arraycopy", adr_type,
+                              src_start, dest_start, copy_length XTOP, check_offset XTOP, check_value);
+  }
+
+#else
   Node* call = make_leaf_call(*ctrl, *mem, call_type, copyfunc_addr, "checkcast_arraycopy", adr_type,
                               src_start, dest_start, copy_length XTOP, check_offset XTOP, check_value);
+#endif
 
   finish_arraycopy_call(call, ctrl, mem, adr_type);
 
@@ -1097,11 +1112,24 @@ void PhaseMacroExpand::generate_unchecked_arraycopy(Node** ctrl, MergeMemNode** 
   address     copyfunc_addr =
       basictype2arraycopy(basic_elem_type, src_offset, dest_offset,
                           disjoint_bases, copyfunc_name, dest_uninitialized);
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  Node * call;
+  if (BarrierSet::barrier_set()->barrier_set_assembler()->use_oop_arraycopy_prologue() &&
+       (basic_elem_type == T_OBJECT || basic_elem_type == T_ARRAY)) {
+    const TypeFunc * call_type = OptoRuntime::fast_oop_arraycopy_Type();
+    call = make_leaf_call(*ctrl, *mem, call_type, copyfunc_addr, copyfunc_name, adr_type,
+                          src_start, dest_start, copy_length XTOP, src, dest);
+  } else {
+    const TypeFunc* call_type = OptoRuntime::fast_arraycopy_Type();
+    call = make_leaf_call(*ctrl, *mem, call_type, copyfunc_addr, copyfunc_name, adr_type,
+                          src_start, dest_start, copy_length XTOP);
+  }
 
+#else
   const TypeFunc* call_type = OptoRuntime::fast_arraycopy_Type();
   Node* call = make_leaf_call(*ctrl, *mem, call_type, copyfunc_addr, copyfunc_name, adr_type,
                               src_start, dest_start, copy_length XTOP);
-
+#endif
   finish_arraycopy_call(call, ctrl, mem, adr_type);
 }
 
