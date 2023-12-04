@@ -262,6 +262,10 @@ void ObjectMonitor::operator delete[] (void *p) {
 void ObjectMonitor::set_object(void* obj) {
 #ifdef INCLUDE_THIRD_PARTY_HEAP
   if (UseThirdPartyHeap) {
+    // Conceptually, lock inflation implies obj is public/shared
+    // However, during deoptimization, lock infaltion can occur
+    // even if there is no contention at all. 
+
     // if (obj != NULL && obj != (cast_to_oop<intptr_t>(-1))) {
     //   bool published = ::mmtk_is_object_published(obj);
     //   if (!published) {

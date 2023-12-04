@@ -520,6 +520,16 @@ jobject JNIHandleBlock::allocate_handle(oop obj) {
     zap();
   }
 
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (Thread::current()->is_VM_thread() && UseThirdPartyHeap) {
+
+    // VMThread roots need to be published, an assumption here is 
+    // that it is at safepoint now 
+    assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
+    ::mmtk_publish_object_with_fence(obj);
+  }
+#endif
+
   // Try last block
   if (_last->_top < block_size_in_oops) {
     oop* handle = &(_last->_handles)[_last->_top++];

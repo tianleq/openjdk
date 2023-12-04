@@ -33,6 +33,17 @@
 
 inline Handle::Handle(Thread* thread, oop obj) {
   assert(thread == Thread::current(), "sanity check");
+
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (thread->is_VM_thread() && UseThirdPartyHeap) {
+    // VMThread roots need to be published, an assumption here is 
+    // that it is at safepoint now 
+    assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
+    ::mmtk_publish_object_with_fence(obj);
+  }
+
+#endif
+
   if (obj == NULL) {
     _handle = NULL;
   } else {

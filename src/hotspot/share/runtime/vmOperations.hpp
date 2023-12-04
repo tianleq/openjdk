@@ -236,6 +236,12 @@ class VM_ThreadStop: public VM_Operation {
   // All oops are passed as JNI handles, since there is no guarantee that a GC might happen before the
   // VM operation is executed.
   VM_ThreadStop(oop thread, oop throwable) {
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+    if (UseThirdPartyHeap) {
+      assert(::mmtk_is_object_published(thread), "thread object should have been published by default\n");
+      ::mmtk_publish_object_with_fence(throwable);
+    }
+#endif
     _thread    = thread;
     _throwable = throwable;
   }
@@ -250,6 +256,7 @@ class VM_ThreadStop: public VM_Operation {
 
   // GC support
   void oops_do(OopClosure* f) {
+    // TODO fix public object leakage
     f->do_oop(&_thread); f->do_oop(&_throwable);
   }
 };

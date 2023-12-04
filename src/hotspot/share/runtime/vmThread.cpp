@@ -758,6 +758,21 @@ void VMThread::execute(VM_Operation* op) {
 
 
 void VMThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+#ifdef INCLUDE_THIRD_PARTY_HEAP
+  if (UseThirdPartyHeap) {
+    // The following are simply assertions that ensure no vmthread roots leaked
+    assert(_pending_exception == NULL, "VMThread has pending exception\n");
+    // ObjectMonitor is a heavyweight version of a JavaMonitor, so it implies there is 
+    // contention, which means the object is shared/public. The only exception currently I found
+    // is during deoptimization, lock infaltion may happen even if there is no contention.
+    ObjectMonitor* mid;
+    for (mid = omInUseList; mid != NULL; mid = mid->FreeNext) {
+      if (mid->object() != NULL) {
+        assert(::mmtk_is_object_published(mid->object()), "VMThread's local monitor list somehow contains a private oop\n");
+      }
+    }
+  }
+#endif
   Thread::oops_do(f, cf);
   _vm_queue->oops_do(f);
 }
