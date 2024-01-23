@@ -398,7 +398,7 @@ void Universe::genesis(TRAPS) {
   {
     Handle tns = java_lang_String::create_from_str("<null_sentinel>", CHECK);
     oop p = tns();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
       ::mmtk_publish_object_with_fence(p);
     }
@@ -558,7 +558,7 @@ oop Universe::reference_pending_list() {
 
 void Universe::set_reference_pending_list(oop list) {
   assert_pll_ownership();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
       ::mmtk_publish_object_with_fence(list);
     }
@@ -573,7 +573,7 @@ bool Universe::has_reference_pending_list() {
 
 oop Universe::swap_reference_pending_list(oop list) {
   assert_pll_locked(is_locked);
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
       ::mmtk_publish_object_with_fence(list);
     }
@@ -1078,6 +1078,7 @@ bool universe_post_init() {
   int len = (StackTraceInThrowable) ? (int)PreallocatedOutOfMemoryErrorCount : 0;
   objArrayOop preallocated_out_of_memory_error_array = oopFactory::new_objArray(ik, len, CHECK_false);
 
+#ifdef MMTK_ENABLE_PUBLIC_BIT
   if (UseThirdPartyHeap) {
     // publish root objects
     ::mmtk_publish_object_with_fence(the_empty_class_klass_array);
@@ -1095,6 +1096,7 @@ bool universe_post_init() {
     ::mmtk_publish_object_with_fence(vm_exception);
     ::mmtk_publish_object_with_fence(preallocated_out_of_memory_error_array);
   }
+#endif
   Universe::_the_empty_class_klass_array = the_empty_class_klass_array;
   Universe::_out_of_memory_error_java_heap = out_of_memory_error_java_heap;
   Universe::_out_of_memory_error_metaspace = out_of_memory_error_metaspace;
@@ -1417,7 +1419,7 @@ void Universe::verify(VerifyOption option, const char* prefix) {
 
 void Universe::set_main_thread_group(oop group)        
 { 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(group);
   }
@@ -1427,7 +1429,7 @@ void Universe::set_main_thread_group(oop group)
 
 void Universe::set_system_thread_group(oop group)      
 { 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(group);
   }
@@ -1550,7 +1552,7 @@ bool Universe::release_fullgc_alot_dummy() {
 
 #endif // ASSERT
 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
 extern "C" {
   extern void mmtk_publish_object_with_fence(void *object) {
     ::mmtk_publish_object(object);

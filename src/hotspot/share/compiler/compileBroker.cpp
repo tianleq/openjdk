@@ -1873,7 +1873,7 @@ void CompileBroker::compiler_thread_loop() {
       if (method()->number_of_breakpoints() == 0) {
         // Compile the method.
         if ((UseCompiler || AlwaysCompileLoopMethods) && CompileBroker::should_compile_new_jobs()) {
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
           if (UseThirdPartyHeap) {
             MutexLocker locker(third_party_heap_local_gc_active_lock);
             third_party_heap_compilation_requested = true;
@@ -1884,7 +1884,7 @@ void CompileBroker::compiler_thread_loop() {
           }
 #endif
           invoke_compiler_on_method(task);
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
           if (UseThirdPartyHeap) {
             MutexLocker locker(third_party_heap_local_gc_active_lock);
             third_party_heap_compilation_requested = false;

@@ -110,7 +110,7 @@ jobject JNIHandles::make_global(Handle obj, AllocFailType alloc_failmode) {
     if (ptr != NULL) {
       assert(*ptr == NULL, "invariant");
       oop p = obj();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(p);
   }
@@ -140,7 +140,7 @@ jobject JNIHandles::make_weak_global(Handle obj, AllocFailType alloc_failmode) {
     if (ptr != NULL) {
       assert(*ptr == NULL, "invariant");
       oop p = obj();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(p);
   }
@@ -520,7 +520,7 @@ jobject JNIHandleBlock::allocate_handle(oop obj) {
     zap();
   }
 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (Thread::current()->is_VM_thread() && UseThirdPartyHeap) {
 
     // VMThread roots need to be published, an assumption here is 

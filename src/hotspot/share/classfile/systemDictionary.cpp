@@ -136,7 +136,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
                          vmSymbols::void_classloader_signature(),
                          CHECK);
   oop java_system_loader = (oop)result.get_jobject();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(java_system_loader);
   }
@@ -149,7 +149,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
                          vmSymbols::void_classloader_signature(),
                          CHECK);
   oop java_platform_loader = (oop)result.get_jobject();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(java_platform_loader);
   }
@@ -1921,7 +1921,7 @@ void SystemDictionary::initialize(TRAPS) {
 
   // Allocate private object used as system class loader lock
   oop system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(system_loader_lock_obj);
   }
@@ -2708,7 +2708,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
       // This is the only call site of set_method_type
       // so it is safe to publish here
       oop m = method_type();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
       if (UseThirdPartyHeap) {
         ::mmtk_publish_object_with_fence(m);
       }

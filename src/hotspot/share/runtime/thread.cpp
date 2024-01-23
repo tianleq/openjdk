@@ -320,11 +320,11 @@ Thread::Thread() {
     barrier_set->on_thread_create(this);
   }
 
-  #ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
   third_party_heap_local_gc_lock = new Monitor(Mutex::nonleaf, "ThirdPartyLocalGC_Lock", true,
                                                Monitor::_safepoint_check_sometimes);
-  ldpt =  new ThreadlocalDerivedPointerTable();
-  #endif
+  ldpt = new ThreadlocalDerivedPointerTable();
+#endif
 
   MACOS_AARCH64_ONLY(DEBUG_ONLY(_wx_init = false));
 }
@@ -466,12 +466,12 @@ Thread::~Thread() {
   delete _SR_lock;
   _SR_lock = NULL;
 
-  #ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
   delete third_party_heap_local_gc_lock;
   third_party_heap_local_gc_lock = NULL;
   delete ldpt;
   ldpt = NULL;
-  #endif
+#endif
 
   // osthread() can be NULL, if creation of thread failed.
   if (osthread() != NULL) os::free_thread(osthread());
@@ -3186,7 +3186,7 @@ const char* JavaThread::get_parent_name() const {
 void JavaThread::set_threadObj(oop p) {
 // thread oop needs to be published by default.
 // A thread cannot create itself, so by definition, they are public 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     if (p) ::mmtk_publish_object_with_fence(p);
   }

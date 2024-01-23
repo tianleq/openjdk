@@ -758,7 +758,7 @@ void VMThread::execute(VM_Operation* op) {
 
 
 void VMThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     // The following are simply assertions that ensure no vmthread roots leaked
     assert(_pending_exception == NULL, "VMThread has pending exception\n");

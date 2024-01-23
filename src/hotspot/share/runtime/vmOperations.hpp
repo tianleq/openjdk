@@ -236,7 +236,7 @@ class VM_ThreadStop: public VM_Operation {
   // All oops are passed as JNI handles, since there is no guarantee that a GC might happen before the
   // VM operation is executed.
   VM_ThreadStop(oop thread, oop throwable) {
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
       assert(::mmtk_is_object_published(thread), "thread object should have been published by default\n");
       ::mmtk_publish_object_with_fence(throwable);

@@ -1438,7 +1438,7 @@ void Deoptimization::deoptimize_frame(JavaThread* thread, intptr_t* id, DeoptRea
   if (thread == Thread::current()) {
     Deoptimization::deoptimize_frame_internal(thread, id, reason);
   } else {
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
     if (UseThirdPartyHeap) {
       MutexLockerEx locker(thread->third_party_heap_local_gc_lock, true);
       while (thread->third_party_heap_mutator.thread_local_gc_status == LOCAL_GC_ACTIVE) {

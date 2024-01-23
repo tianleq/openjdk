@@ -251,7 +251,7 @@ static void add_derived_oop(oop* base, oop* derived, JavaThread* jt) {
 #if !defined(TIERED) && !INCLUDE_JVMCI
   COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
   // jt == NULL when it is coming from frame::verify, which will never be a local gc 
   if (jt && jt->mmtk_thread_local_gc_active()) {
     assert(!DerivedPointerTable::is_active(), "Global DerivedPointerTable is not deactived");

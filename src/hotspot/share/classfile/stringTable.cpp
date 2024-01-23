@@ -362,7 +362,7 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
   } else {
     string_h = java_lang_String::create_from_unicode(name, len, CHECK_NULL);
   }
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(string_h());
   }

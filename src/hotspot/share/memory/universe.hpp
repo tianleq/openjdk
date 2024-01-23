@@ -41,13 +41,17 @@ class CollectedHeap;
 class DeferredObjAllocEvent;
 #ifdef INCLUDE_THIRD_PARTY_HEAP
 extern "C" {
+#if defined(MMTK_ENABLE_PUBLIC_BIT)
   extern void mmtk_publish_object(void *object);
   extern void mmtk_publish_object_with_fence(void *object);
+#endif
+#ifdef MMTK_ENABLE_THREAD_LOCAL_GC
   extern int32_t third_party_heap_active_local_gc_count;
   extern Monitor *third_party_heap_local_gc_active_lock;
   extern bool third_party_heap_compilation_requested;
   const uint32_t LOCAL_GC_ACTIVE = 1;
   const uint32_t LOCAL_GC_INACTIVE = 0;
+#endif
 }
 #endif
 // A helper class for caching a Method* when the user of the cache

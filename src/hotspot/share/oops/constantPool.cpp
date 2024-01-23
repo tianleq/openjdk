@@ -1088,7 +1088,7 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
     oop new_result = (result_oop == NULL ? Universe::the_null_sentinel() : result_oop);
     // because of the benign race here, the new_result will probably be shared between threads
     // so it needs to be published before writing to the constant pool
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(new_result);
   }

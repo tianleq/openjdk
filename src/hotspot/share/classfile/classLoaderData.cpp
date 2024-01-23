@@ -196,7 +196,7 @@ ClassLoaderData::ChunkedHandleList::~ChunkedHandleList() {
 
 oop* ClassLoaderData::ChunkedHandleList::add(oop o) {
 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(o);
   }

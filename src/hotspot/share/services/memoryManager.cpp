@@ -125,7 +125,7 @@ instanceOop MemoryManager::get_memory_manager_instance(TRAPS) {
 
       // Get the address of the object we created via call_special.
       mgr_obj = mgr();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object(mgr_obj);
   }

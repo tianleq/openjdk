@@ -126,7 +126,7 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
       // Get the address of the object we created via call_special.
       pool_obj = pool();
 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object(pool_obj);
   }
@@ -162,7 +162,7 @@ static void set_sensor_obj_at(SensorInfo** sensor_ptr, instanceHandle sh) {
   assert(*sensor_ptr == NULL, "Should be called only once");
   SensorInfo* sensor = new SensorInfo();
   instanceOop s = sh();
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
     ::mmtk_publish_object_with_fence(s);
   }

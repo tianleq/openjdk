@@ -3809,7 +3809,7 @@ oop java_lang_invoke_ResolvedMethodName::find_resolved_method(const methodHandle
       k->initialize(CHECK_NULL);
     }
     oop new_resolved_method = k->allocate_instance(CHECK_NULL);
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     // resolved method oop will be added into the ResolvedMethodTable
     // so need to publish it before it is added
     // into the table

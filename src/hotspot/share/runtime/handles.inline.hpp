@@ -34,7 +34,7 @@
 inline Handle::Handle(Thread* thread, oop obj) {
   assert(thread == Thread::current(), "sanity check");
 
-#ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (thread->is_VM_thread() && UseThirdPartyHeap) {
     // VMThread roots need to be published, an assumption here is 
     // that it is at safepoint now 
