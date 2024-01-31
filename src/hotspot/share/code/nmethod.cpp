@@ -1595,7 +1595,7 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
                "oop must be found in exactly one place");
         if (r->oop_is_immediate() && r->oop_value() != NULL) {
           f->do_oop(r->oop_addr());
-#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(DEBUG_PUBLISH_OBJECT)
           if (UseThirdPartyHeap) {
             oop obj = *(r->oop_addr());
             if (obj != NULL) {
@@ -1610,7 +1610,7 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
           }
 #endif
         }
-#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(DEBUG_PUBLISH_OBJECT)
         if (UseThirdPartyHeap) {
           if (narrowOop* narrow_oop_slot = r->narrow_oop_slot()) {
             f->do_oop((narrowOop*) narrow_oop_slot);
@@ -1637,7 +1637,7 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
   for (oop* p = oops_begin(); p < oops_end(); p++) {
     if (*p == Universe::non_oop_word())  continue;  // skip non-oops
     f->do_oop(p);
-#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(DEBUG_PUBLISH_OBJECT)
     if (UseThirdPartyHeap) {
       oop obj = *p;
       if (obj != NULL) {
