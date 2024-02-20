@@ -321,8 +321,6 @@ Thread::Thread() {
   }
 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  third_party_heap_local_gc_lock = new Monitor(Mutex::nonleaf, "ThirdPartyLocalGC_Lock", true,
-                                               Monitor::_safepoint_check_sometimes);
   ldpt = new ThreadlocalDerivedPointerTable();
 #endif
 
@@ -467,8 +465,6 @@ Thread::~Thread() {
   _SR_lock = NULL;
 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  delete third_party_heap_local_gc_lock;
-  third_party_heap_local_gc_lock = NULL;
   delete ldpt;
   ldpt = NULL;
 #endif

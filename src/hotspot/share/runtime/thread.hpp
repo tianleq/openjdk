@@ -665,7 +665,6 @@ protected:
   void* third_party_heap_collector = NULL;
 
 #ifdef MMTK_ENABLE_THREAD_LOCAL_GC
-  Monitor* third_party_heap_local_gc_lock;
   ThreadlocalDerivedPointerTable* ldpt;
 #endif
   static ByteSize third_party_heap_mutator_offset() { return byte_offset_of(Thread, third_party_heap_mutator); }
