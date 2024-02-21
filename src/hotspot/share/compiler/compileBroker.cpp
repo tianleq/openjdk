@@ -1875,7 +1875,7 @@ void CompileBroker::compiler_thread_loop() {
         if ((UseCompiler || AlwaysCompileLoopMethods) && CompileBroker::should_compile_new_jobs()) {
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
           if (UseThirdPartyHeap) {
-            MutexLocker locker(third_party_heap_local_gc_active_lock);
+            MutexLockerEx locker(third_party_heap_local_gc_active_lock);
             third_party_heap_compilation_requested = true;
             while (third_party_heap_active_local_gc_count > 0) {
               third_party_heap_local_gc_active_lock->wait();
@@ -1886,7 +1886,7 @@ void CompileBroker::compiler_thread_loop() {
           invoke_compiler_on_method(task);
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
           if (UseThirdPartyHeap) {
-            MutexLocker locker(third_party_heap_local_gc_active_lock);
+            MutexLockerEx locker(third_party_heap_local_gc_active_lock);
             third_party_heap_compilation_requested = false;
             ++third_party_heap_active_local_gc_count;
             if (!third_party_heap_active_local_gc_count) third_party_heap_local_gc_active_lock->notify_all();
