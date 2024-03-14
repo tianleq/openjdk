@@ -47,6 +47,11 @@ WeakHandle<T> WeakHandle<T>::create(Handle obj) {
   if (oop_addr == NULL) {
     vm_exit_out_of_memory(sizeof(oop*), OOM_MALLOC_ERROR, "Unable to create new weak oop handle in OopStorage");
   }
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
+  if (UseThirdPartyHeap) {
+    ::mmtk_publish_object_with_fence(obj());
+  }
+#endif
   // Create WeakHandle with address returned and store oop into it.
   NativeAccess<ON_PHANTOM_OOP_REF>::oop_store(oop_addr, obj());
   return WeakHandle(oop_addr);
