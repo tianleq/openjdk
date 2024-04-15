@@ -39,7 +39,11 @@ inline Handle::Handle(Thread* thread, oop obj) {
     // VMThread roots need to be published, an assumption here is 
     // that it is at safepoint now 
     assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+    ::mmtk_publish_object_with_fence(NULL, obj);
+#else
     ::mmtk_publish_object_with_fence(obj);
+#endif
   }
 
 #endif

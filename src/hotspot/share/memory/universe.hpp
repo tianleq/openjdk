@@ -42,8 +42,15 @@ class DeferredObjAllocEvent;
 #ifdef INCLUDE_THIRD_PARTY_HEAP
 extern "C" {
 #if defined(MMTK_ENABLE_PUBLIC_BIT)
-  extern void mmtk_publish_object(void *object);
+
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+  extern void mmtk_publish_object(JavaThread* thread, void *object);
+  extern void mmtk_publish_object_with_fence(JavaThread* thread, void *object);
+#else
   extern void mmtk_publish_object_with_fence(void *object);
+  extern void mmtk_publish_object(void *object);
+#endif
+
 #endif
 #ifdef MMTK_ENABLE_THREAD_LOCAL_GC
   extern int32_t third_party_heap_active_local_gc_count;

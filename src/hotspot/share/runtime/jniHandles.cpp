@@ -112,7 +112,12 @@ jobject JNIHandles::make_global(Handle obj, AllocFailType alloc_failmode) {
       oop p = obj();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+    JavaThread *thread = JavaThread::current();
+    ::mmtk_publish_object_with_fence(thread, p);
+#else
     ::mmtk_publish_object_with_fence(p);
+#endif
   }
 #endif
       NativeAccess<>::oop_store(ptr, p);
@@ -142,7 +147,12 @@ jobject JNIHandles::make_weak_global(Handle obj, AllocFailType alloc_failmode) {
       oop p = obj();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+    JavaThread *thread = JavaThread::current();
+    ::mmtk_publish_object_with_fence(thread, p);
+#else
     ::mmtk_publish_object_with_fence(p);
+#endif
   }
 #endif
       NativeAccess<ON_PHANTOM_OOP_REF>::oop_store(ptr, p);
@@ -526,7 +536,11 @@ jobject JNIHandleBlock::allocate_handle(oop obj) {
     // VMThread roots need to be published, an assumption here is 
     // that it is at safepoint now 
     assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+    ::mmtk_publish_object_with_fence(NULL, obj);
+#else
     ::mmtk_publish_object_with_fence(obj);
+#endif
   }
 #endif
 

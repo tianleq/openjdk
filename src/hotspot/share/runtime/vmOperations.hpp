@@ -239,7 +239,11 @@ class VM_ThreadStop: public VM_Operation {
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
       assert(::mmtk_is_object_published(thread), "thread object should have been published by default\n");
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+      ::mmtk_publish_object_with_fence(NULL, throwable);
+#else
       ::mmtk_publish_object_with_fence(throwable);
+#endif
     }
 #endif
     _thread    = thread;

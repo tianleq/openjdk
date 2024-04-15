@@ -198,7 +198,12 @@ oop* ClassLoaderData::ChunkedHandleList::add(oop o) {
 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+    JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
+    ::mmtk_publish_object_with_fence(thread, o);
+#else
     ::mmtk_publish_object_with_fence(o);
+#endif
   }
 #endif
 

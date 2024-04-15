@@ -127,7 +127,12 @@ instanceOop MemoryManager::get_memory_manager_instance(TRAPS) {
       mgr_obj = mgr();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+    JavaThread *thread = JavaThread::current();
+    ::mmtk_publish_object(thread, mgr_obj);
+#else
     ::mmtk_publish_object(mgr_obj);
+#endif
   }
 #endif
 
