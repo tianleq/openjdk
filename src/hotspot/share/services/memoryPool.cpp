@@ -128,7 +128,7 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
     JavaThread *thread = JavaThread::current();
     ::mmtk_publish_object(thread, pool_obj);
 #else
