@@ -669,7 +669,7 @@ protected:
 #endif
   static ByteSize third_party_heap_mutator_offset() { return byte_offset_of(Thread, third_party_heap_mutator); }
 #ifdef MMTK_ENABLE_THREAD_LOCAL_GC
-  bool mmtk_thread_local_gc_active() { return third_party_heap_mutator.thread_local_gc_status == 1; }
+  bool mmtk_thread_local_gc_active() { return false; }
 #endif
 
 #endif
