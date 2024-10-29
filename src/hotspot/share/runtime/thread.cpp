@@ -3185,7 +3185,9 @@ void JavaThread::set_threadObj(oop p) {
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
 #if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
-    if (p) ::mmtk_publish_object_with_fence(this, p);
+    Thread *current = Thread::current();
+    JavaThread *t = current && current->is_Java_thread() ? (JavaThread*) current : NULL;
+    if (p) ::mmtk_publish_object_with_fence(t, p);
 #else
     if (p) ::mmtk_publish_object_with_fence(p);
 #endif
