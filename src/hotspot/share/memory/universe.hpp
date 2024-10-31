@@ -43,7 +43,7 @@ class DeferredObjAllocEvent;
 extern "C" {
 #if defined(MMTK_ENABLE_PUBLIC_BIT)
 
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
   extern void mmtk_publish_object(JavaThread* thread, void *object);
   extern void mmtk_publish_object_with_fence(JavaThread* thread, void *object);
 #else

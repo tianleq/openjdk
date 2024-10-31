@@ -400,7 +400,7 @@ void Universe::genesis(TRAPS) {
     oop p = tns();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
       assert(THREAD->is_Java_thread(), "thread is not a Java thread");
       JavaThread *thread = (JavaThread *) THREAD;
       ::mmtk_publish_object_with_fence(thread, p);
@@ -566,7 +566,7 @@ void Universe::set_reference_pending_list(oop list) {
   assert_pll_ownership();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
       JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
       ::mmtk_publish_object_with_fence(thread, list);
 #else
@@ -586,7 +586,7 @@ oop Universe::swap_reference_pending_list(oop list) {
   assert_pll_locked(is_locked);
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
       JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
       ::mmtk_publish_object_with_fence(thread, list);
 #else
@@ -1096,7 +1096,7 @@ bool universe_post_init() {
 
 #ifdef MMTK_ENABLE_PUBLIC_BIT
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     assert(THREAD->is_Java_thread(), "thread is not a Java thread");
     JavaThread *thread = (JavaThread *) THREAD;
 
@@ -1458,7 +1458,7 @@ void Universe::set_main_thread_group(oop group)
 { 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
     ::mmtk_publish_object_with_fence(thread, group);
 #else
@@ -1473,7 +1473,7 @@ void Universe::set_system_thread_group(oop group)
 { 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
     ::mmtk_publish_object_with_fence(thread, group);
 #else
@@ -1601,7 +1601,7 @@ bool Universe::release_fullgc_alot_dummy() {
 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
 extern "C" {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
   extern void mmtk_publish_object_with_fence(JavaThread* thread, void *object) {
     ::mmtk_publish_object(thread, object);
     // make sure the publishing occurs before the write

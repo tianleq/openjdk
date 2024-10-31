@@ -1090,7 +1090,7 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
     // so it needs to be published before writing to the constant pool
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     assert(THREAD->is_Java_thread(), "thread is not a Java thread");
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, new_result);

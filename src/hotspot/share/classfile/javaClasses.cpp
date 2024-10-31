@@ -3814,7 +3814,7 @@ oop java_lang_invoke_ResolvedMethodName::find_resolved_method(const methodHandle
     // so need to publish it before it is added
     // into the table
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
       assert(THREAD->is_Java_thread(), "thread is not a Java thread");
       JavaThread *thread = (JavaThread *) THREAD;
       ::mmtk_publish_object_with_fence(thread, new_resolved_method);

@@ -138,7 +138,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
   oop java_system_loader = (oop)result.get_jobject();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     assert(THREAD->is_Java_thread(), "thread is not a Java thread");
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, java_system_loader);
@@ -157,7 +157,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
   oop java_platform_loader = (oop)result.get_jobject();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     assert(THREAD->is_Java_thread(), "thread is not a Java thread");
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, java_platform_loader);
@@ -1935,7 +1935,7 @@ void SystemDictionary::initialize(TRAPS) {
   oop system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
     assert(THREAD->is_Java_thread(), "thread is not a Java thread");
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, system_loader_lock_obj);
@@ -2728,7 +2728,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
       oop m = method_type();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
       if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING) || defined(MMTK_ENABLE_EXTRA_HEADER)
         assert(THREAD->is_Java_thread(), "thread is not a Java thread");
         JavaThread *thread = (JavaThread *) THREAD;
         ::mmtk_publish_object_with_fence(thread, m);
