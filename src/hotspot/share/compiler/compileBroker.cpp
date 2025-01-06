@@ -782,6 +782,10 @@ JavaThread* CompileBroker::make_thread(jobject thread_handle, CompileQueue* queu
     } else {
       thread = new CodeCacheSweeperThread();
     }
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  // set the compiler flag so that mmtk can tell the difference between a normal java thread and runtime compiler related java thread
+  if (UseThirdPartyHeap) ::mmtk_set_compiler_thread(thread);
+#endif
     // At this point the new CompilerThread data-races with this startup
     // thread (which I believe is the primoridal thread and NOT the VM
     // thread).  This means Java bytecodes being executed at startup can
