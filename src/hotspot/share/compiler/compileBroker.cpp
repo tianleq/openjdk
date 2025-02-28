@@ -778,6 +778,12 @@ JavaThread* CompileBroker::make_thread(jobject thread_handle, CompileQueue* queu
       if (!InjectCompilerCreationFailure || comp->num_compiler_threads() == 0) {
         CompilerCounters* counters = new CompilerCounters();
         thread = new CompilerThread(queue, counters);
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC) && defined(INCLUDE_THIRD_PARTY_HEAP)
+        // disable local gc on compiler thread to avoid deadlock
+        // Have to do it here, in a constructor, the virtual call mechanism is disabled 
+        // https://isocpp.org/wiki/faq/strange-inheritance#calling-virtuals-from-ctors
+        thread->third_party_heap_mutator.thread_local_gc_status = 2;
+#endif
       }
     } else {
       thread = new CodeCacheSweeperThread();
