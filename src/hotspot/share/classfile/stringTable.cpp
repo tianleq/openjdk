@@ -360,7 +360,11 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
   if (!string_or_null_h.is_null()) {
     string_h = string_or_null_h;
   } else {
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+    string_h = java_lang_String::create_from_unicode(name, len, CHECK_NULL, true);
+#else
     string_h = java_lang_String::create_from_unicode(name, len, CHECK_NULL);
+#endif
   }
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {

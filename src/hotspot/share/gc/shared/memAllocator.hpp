@@ -75,6 +75,9 @@ protected:
 
 public:
   oop allocate() const;
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  oop allocate_public() const;
+#endif 
   virtual oop initialize(HeapWord* mem) const = 0;
 };
 

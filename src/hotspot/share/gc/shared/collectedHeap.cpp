@@ -462,6 +462,19 @@ oop CollectedHeap::class_allocate(Klass* klass, int size, TRAPS) {
   return allocator.allocate();
 }
 
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+oop CollectedHeap::public_obj_allocate(Klass* klass, int size, TRAPS) {
+  return obj_allocate(klass, size, THREAD);
+}
+oop CollectedHeap::public_array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS) {
+  return array_allocate(klass, size, length, do_zero, THREAD);
+}
+
+HeapWord* CollectedHeap::mem_allocate_public(size_t size, bool* gc_overhead_limit_was_exceeded) {
+  return mem_allocate(size, gc_overhead_limit_was_exceeded);
+}
+#endif
+
 void CollectedHeap::ensure_parsability(bool retire_tlabs) {
   // The second disjunct in the assertion below makes a concession
   // for the start-up verification done while the VM is being

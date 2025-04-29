@@ -305,7 +305,12 @@ void JavaCalls::call_static(JavaValue* result, Klass* klass, Symbol* name, Symbo
 
 Handle JavaCalls::construct_new_instance(InstanceKlass* klass, Symbol* constructor_signature, JavaCallArguments* args, TRAPS) {
   klass->initialize(CHECK_NH); // Quick no-op if already initialized.
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  // thread oop is public by default, so make sure they have the alloc public semantic
+  Handle obj = klass->allocate_instance_handle(CHECK_NH, klass == SystemDictionary::Thread_klass());
+#else
   Handle obj = klass->allocate_instance_handle(CHECK_NH);
+#endif
   JavaValue void_result(T_VOID);
   args->set_receiver(obj); // inserts <obj> as the first argument.
   JavaCalls::call_special(&void_result, klass,

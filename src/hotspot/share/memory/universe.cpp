@@ -396,7 +396,12 @@ void Universe::genesis(TRAPS) {
   } // end of core bootstrapping
 
   {
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+    Handle tns = java_lang_String::create_from_str("<null_sentinel>", CHECK, true);
+#else
     Handle tns = java_lang_String::create_from_str("<null_sentinel>", CHECK);
+#endif
+
     oop p = tns();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
@@ -1049,6 +1054,53 @@ bool universe_post_init() {
 
   HandleMark hm(THREAD);
 #ifdef INCLUDE_THIRD_PARTY_HEAP
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+ // Setup preallocated empty java.lang.Class array
+  objArrayOop the_empty_class_klass_array = oopFactory::new_public_objArray(SystemDictionary::Class_klass(), 0, CHECK_false);
+  // Setup preallocated OutOfMemoryError errors
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_OutOfMemoryError(), true, CHECK_false);
+  InstanceKlass* ik = InstanceKlass::cast(k);
+  instanceOop out_of_memory_error_java_heap = ik->allocate_instance(CHECK_false, true);
+  instanceOop out_of_memory_error_metaspace = ik->allocate_instance(CHECK_false, true);
+  instanceOop out_of_memory_error_class_metaspace = ik->allocate_instance(CHECK_false, true);
+  instanceOop out_of_memory_error_array_size = ik->allocate_instance(CHECK_false, true);
+  instanceOop out_of_memory_error_gc_overhead_limit = ik->allocate_instance(CHECK_false, true);
+  instanceOop out_of_memory_error_realloc_objects = ik->allocate_instance(CHECK_false, true);
+  oop delayed_stack_overflow_error_message = NULL;
+  // Setup preallocated cause message for delayed StackOverflowError
+  if (StackReservedPages > 0) {
+    delayed_stack_overflow_error_message =
+      java_lang_String::create_oop_from_str("Delayed StackOverflowError due to ReservedStackAccess annotated method", CHECK_false, true);
+  }
+
+  // Setup preallocated NullPointerException
+  // (this is currently used for a cheap & dirty solution in compiler exception handling)
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_NullPointerException(), true, CHECK_false);
+  instanceOop null_ptr_exception_instance = InstanceKlass::cast(k)->allocate_instance(CHECK_false, true);
+  // Setup preallocated ArithmeticException
+  // (this is currently used for a cheap & dirty solution in compiler exception handling)
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_ArithmeticException(), true, CHECK_false);
+  instanceOop arithmetic_exception_instance = InstanceKlass::cast(k)->allocate_instance(CHECK_false, true);
+  // Virtual Machine Error for when we get into a situation we can't resolve
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_VirtualMachineError(), true, CHECK_false);
+  bool linked = InstanceKlass::cast(k)->link_class_or_fail(CHECK_false);
+  if (!linked) {
+    tty->print_cr("Unable to link/verify VirtualMachineError class");
+    return false; // initialization failed
+  }
+  instanceOop virtual_machine_error_instance = InstanceKlass::cast(k)->allocate_instance(CHECK_false, true);
+
+  instanceOop vm_exception = InstanceKlass::cast(k)->allocate_instance(CHECK_false, true);
+
+  // Setup the array of errors that have preallocated backtrace
+  k = out_of_memory_error_java_heap->klass();
+  assert(k->name() == vmSymbols::java_lang_OutOfMemoryError(), "should be out of memory error");
+  ik = InstanceKlass::cast(k);
+
+  int len = (StackTraceInThrowable) ? (int)PreallocatedOutOfMemoryErrorCount : 0;
+  objArrayOop preallocated_out_of_memory_error_array = oopFactory::new_public_objArray(ik, len, CHECK_false);
+#else
+
   // Setup preallocated empty java.lang.Class array
   objArrayOop the_empty_class_klass_array = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_false);
   // Setup preallocated OutOfMemoryError errors
@@ -1093,7 +1145,7 @@ bool universe_post_init() {
 
   int len = (StackTraceInThrowable) ? (int)PreallocatedOutOfMemoryErrorCount : 0;
   objArrayOop preallocated_out_of_memory_error_array = oopFactory::new_objArray(ik, len, CHECK_false);
-
+#endif
 #ifdef MMTK_ENABLE_PUBLIC_BIT
   if (UseThirdPartyHeap) {
 #if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
@@ -1150,24 +1202,24 @@ bool universe_post_init() {
   Universe::_virtual_machine_error_instance = virtual_machine_error_instance;
   Universe::_vm_exception = vm_exception;
 
-  Handle msg = java_lang_String::create_from_str("Java heap space", CHECK_false);
+  Handle msg = java_lang_String::create_from_str("Java heap space", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_out_of_memory_error_java_heap, msg());
 
-  msg = java_lang_String::create_from_str("Metaspace", CHECK_false);
+  msg = java_lang_String::create_from_str("Metaspace", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_out_of_memory_error_metaspace, msg());
-  msg = java_lang_String::create_from_str("Compressed class space", CHECK_false);
+  msg = java_lang_String::create_from_str("Compressed class space", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_out_of_memory_error_class_metaspace, msg());
 
-  msg = java_lang_String::create_from_str("Requested array size exceeds VM limit", CHECK_false);
+  msg = java_lang_String::create_from_str("Requested array size exceeds VM limit", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_out_of_memory_error_array_size, msg());
 
-  msg = java_lang_String::create_from_str("GC overhead limit exceeded", CHECK_false);
+  msg = java_lang_String::create_from_str("GC overhead limit exceeded", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_out_of_memory_error_gc_overhead_limit, msg());
 
-  msg = java_lang_String::create_from_str("Java heap space: failed reallocation of scalar replaced objects", CHECK_false);
+  msg = java_lang_String::create_from_str("Java heap space: failed reallocation of scalar replaced objects", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_out_of_memory_error_realloc_objects, msg());
 
-  msg = java_lang_String::create_from_str("/ by zero", CHECK_false);
+  msg = java_lang_String::create_from_str("/ by zero", CHECK_false, true);
   java_lang_Throwable::set_message(Universe::_arithmetic_exception_instance, msg());
 
   // // Setup the array of errors that have preallocated backtrace

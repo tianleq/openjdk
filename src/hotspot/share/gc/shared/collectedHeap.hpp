@@ -313,6 +313,13 @@ class CollectedHeap : public CHeapObj<mtGC> {
   virtual oop array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS);
   virtual oop class_allocate(Klass* klass, int size, TRAPS);
 
+
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  virtual oop public_obj_allocate(Klass* klass, int size, TRAPS);
+  virtual oop public_array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS);
+  virtual HeapWord* mem_allocate_public(size_t size, bool* gc_overhead_limit_was_exceeded);
+#endif
+
   // Utilities for turning raw memory into filler objects.
   //
   // min_fill_size() is the smallest region that can be filled.

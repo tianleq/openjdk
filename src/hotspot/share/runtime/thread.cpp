@@ -1115,7 +1115,11 @@ static oop create_initial_thread(Handle thread_group, JavaThread* thread,
                                  TRAPS) {
   InstanceKlass* ik = SystemDictionary::Thread_klass();
   assert(ik->is_initialized(), "must be");
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  instanceHandle thread_oop = ik->allocate_instance_handle(CHECK_NULL, true);
+#else
   instanceHandle thread_oop = ik->allocate_instance_handle(CHECK_NULL);
+#endif
 
   // Cannot use JavaCalls::construct_new_instance because the java.lang.Thread
   // constructor calls Thread.current(), which must be set here for the
@@ -1249,7 +1253,11 @@ void JavaThread::allocate_threadObj(Handle thread_group, const char* thread_name
 
   InstanceKlass* ik = SystemDictionary::Thread_klass();
   assert(ik->is_initialized(), "must be");
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  instanceHandle thread_oop = ik->allocate_instance_handle(CHECK, true);
+#else
   instanceHandle thread_oop = ik->allocate_instance_handle(CHECK);
+#endif
 
   // We are called from jni_AttachCurrentThread/jni_AttachCurrentThreadAsDaemon.
   // We cannot use JavaCalls::construct_new_instance because the java.lang.Thread

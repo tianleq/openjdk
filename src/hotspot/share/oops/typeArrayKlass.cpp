@@ -122,6 +122,20 @@ oop TypeArrayKlass::multi_allocate(int rank, jint* last_size, TRAPS) {
   return allocate(length, THREAD);
 }
 
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+
+typeArrayOop TypeArrayKlass::allocate_public_common(int length, bool do_zero, TRAPS) {
+  
+  return allocate_common(length, do_zero, THREAD);
+}
+
+oop TypeArrayKlass::multi_allocate_public(int rank, jint* last_size, TRAPS) {
+
+  return multi_allocate(rank, last_size, THREAD);
+}
+
+#endif
+
 
 void TypeArrayKlass::copy_array(arrayOop s, int src_pos, arrayOop d, int dst_pos, int length, TRAPS) {
   assert(s->is_typeArray(), "must be type array");

@@ -70,6 +70,39 @@ class oopFactory: AllStatic {
   // Helpers that return handles
   static objArrayHandle  new_objArray_handle(Klass* klass, int length, TRAPS);
   static typeArrayHandle new_byteArray_handle(int length, TRAPS);
+
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  // Basic type leaf array allocation
+  static typeArrayOop    new_public_boolArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::boolArrayKlassObj  ())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_charArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::charArrayKlassObj  ())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_singleArray(int length, TRAPS) { return TypeArrayKlass::cast(Universe::singleArrayKlassObj())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_doubleArray(int length, TRAPS) { return TypeArrayKlass::cast(Universe::doubleArrayKlassObj())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_byteArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::byteArrayKlassObj  ())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_shortArray (int length, TRAPS) { return TypeArrayKlass::cast(Universe::shortArrayKlassObj ())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_intArray   (int length, TRAPS) { return TypeArrayKlass::cast(Universe::intArrayKlassObj   ())->allocate_public(length, THREAD); }
+  static typeArrayOop    new_public_longArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::longArrayKlassObj  ())->allocate(length, THREAD); }
+
+  // create java.lang.Object[]
+  static objArrayOop     new_public_objectArray(int length, TRAPS)  {
+    assert(Universe::objectArrayKlassObj() != NULL, "Too early?");
+    return ObjArrayKlass::
+      cast(Universe::objectArrayKlassObj())->allocate(length, THREAD, true);
+  }
+
+  static typeArrayOop    new_public_charArray           (const char* utf8_str,  TRAPS);
+  static typeArrayOop    new_public_tenured_charArray(int length, TRAPS);
+
+  static typeArrayOop    new_public_typeArray(BasicType type, int length, TRAPS);
+  static typeArrayOop    new_public_typeArray_nozero(BasicType type, int length, TRAPS);
+  static typeArrayOop    new_public_symbolArray(int length, TRAPS);
+
+  // Regular object arrays
+  static objArrayOop     new_public_objArray(Klass* klass, int length, TRAPS);
+
+  // Helpers that return handles
+  static objArrayHandle  new_public_objArray_handle(Klass* klass, int length, TRAPS);
+  static typeArrayHandle new_public_byteArray_handle(int length, TRAPS);
+#endif
 };
 
 #endif // SHARE_VM_MEMORY_OOPFACTORY_HPP

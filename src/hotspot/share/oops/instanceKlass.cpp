@@ -1209,22 +1209,6 @@ bool InstanceKlass::is_same_or_direct_interface(Klass *k) const {
   return false;
 }
 
-objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
-  if (length < 0)  {
-    THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
-  }
-  if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
-    report_java_out_of_memory("Requested array size exceeds VM limit");
-    JvmtiExport::post_array_size_exhausted();
-    THROW_OOP_0(Universe::out_of_memory_error_array_size());
-  }
-  int size = objArrayOopDesc::object_size(length);
-  Klass* ak = array_klass(n, CHECK_NULL);
-  objArrayOop o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length,
-                                                                /* do_zero */ true, CHECK_NULL);
-  return o;
-}
-
 instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
   if (TraceFinalizerRegistration) {
     tty->print("Registered ");
@@ -1250,6 +1234,71 @@ instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
   return h_i();
 }
 
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+// allocation
+instanceOop InstanceKlass::allocate_instance(TRAPS, bool alloc_public) {
+  bool has_finalizer_flag = has_finalizer(); // Query before possible GC
+  int size = size_helper();  // Query before forming handle.
+
+  instanceOop i;
+  if (alloc_public) {
+    i = (instanceOop)Universe::heap()->public_obj_allocate(this, size, CHECK_NULL);
+  } else {
+    i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
+  }
+
+  if (has_finalizer_flag && !RegisterFinalizersAtInit) {
+    i = register_finalizer(i, CHECK_NULL);
+  }
+  return i;
+}
+
+// additional member function to return a handle
+instanceHandle InstanceKlass::allocate_instance_handle(TRAPS, bool alloc_public) {
+  return instanceHandle(THREAD, allocate_instance(THREAD, alloc_public));;
+}
+
+objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS, bool alloc_public) {
+  if (length < 0)  {
+    THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
+  }
+  if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
+    report_java_out_of_memory("Requested array size exceeds VM limit");
+    JvmtiExport::post_array_size_exhausted();
+    THROW_OOP_0(Universe::out_of_memory_error_array_size());
+  }
+  int size = objArrayOopDesc::object_size(length);
+  Klass* ak = array_klass(n, CHECK_NULL);
+  objArrayOop o;
+  if (alloc_public) {
+    o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length, 
+                                                      /* do_zero */ true, CHECK_NULL);
+  } else {
+    o = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length,
+                                                             /* do_zero */ true, CHECK_NULL);
+  } 
+  
+  return o;
+}
+
+#else 
+
+objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
+  if (length < 0)  {
+    THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
+  }
+  if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
+    report_java_out_of_memory("Requested array size exceeds VM limit");
+    JvmtiExport::post_array_size_exhausted();
+    THROW_OOP_0(Universe::out_of_memory_error_array_size());
+  }
+  int size = objArrayOopDesc::object_size(length);
+  Klass* ak = array_klass(n, CHECK_NULL);
+  objArrayOop o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length,
+                                                                /* do_zero */ true, CHECK_NULL);
+  return o;
+}
+
 instanceOop InstanceKlass::allocate_instance(TRAPS) {
   bool has_finalizer_flag = has_finalizer(); // Query before possible GC
   int size = size_helper();  // Query before forming handle.
@@ -1266,6 +1315,8 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
 instanceHandle InstanceKlass::allocate_instance_handle(TRAPS) {
   return instanceHandle(THREAD, allocate_instance(THREAD));
 }
+
+#endif
 
 void InstanceKlass::check_valid_for_instantiation(bool throwError, TRAPS) {
   if (is_interface() || is_abstract()) {

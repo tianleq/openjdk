@@ -176,10 +176,15 @@ void ConstantPool::initialize_resolved_references(ClassLoaderData* loader_data,
       }
       set_reference_map(om);
     }
-
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+    // Create Java array for holding resolved strings, methodHandles,
+    // methodTypes, invokedynamic and invokehandle appendix objects, etc.
+    objArrayOop stom = oopFactory::new_public_objArray(SystemDictionary::Object_klass(), map_length, CHECK);
+#else
     // Create Java array for holding resolved strings, methodHandles,
     // methodTypes, invokedynamic and invokehandle appendix objects, etc.
     objArrayOop stom = oopFactory::new_objArray(SystemDictionary::Object_klass(), map_length, CHECK);
+#endif
     Handle refs_handle (THREAD, (oop)stom);  // must handleize.
     set_resolved_references(loader_data->add_handle(refs_handle));
   }
@@ -353,7 +358,11 @@ void ConstantPool::restore_unshareable_info(TRAPS) {
       // Recreate the object array and add to ClassLoaderData.
       int map_length = resolved_reference_length();
       if (map_length > 0) {
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+        objArrayOop stom = oopFactory::new_public_objArray(SystemDictionary::Object_klass(), map_length, CHECK);
+#else
         objArrayOop stom = oopFactory::new_objArray(SystemDictionary::Object_klass(), map_length, CHECK);
+#endif
         Handle refs_handle(THREAD, (oop)stom);  // must handleize.
         set_resolved_references(loader_data->add_handle(refs_handle));
       }
@@ -1052,25 +1061,25 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
   case JVM_CONSTANT_Integer:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.i = this_cp->int_at(index);
-    result_oop = java_lang_boxing_object::create(T_INT, &prim_value, CHECK_NULL);
+    result_oop = java_lang_boxing_object::create(T_INT, &prim_value, CHECK_NULL, true);
     break;
 
   case JVM_CONSTANT_Float:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.f = this_cp->float_at(index);
-    result_oop = java_lang_boxing_object::create(T_FLOAT, &prim_value, CHECK_NULL);
+    result_oop = java_lang_boxing_object::create(T_FLOAT, &prim_value, CHECK_NULL, true);
     break;
 
   case JVM_CONSTANT_Long:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.j = this_cp->long_at(index);
-    result_oop = java_lang_boxing_object::create(T_LONG, &prim_value, CHECK_NULL);
+    result_oop = java_lang_boxing_object::create(T_LONG, &prim_value, CHECK_NULL, true);
     break;
 
   case JVM_CONSTANT_Double:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.d = this_cp->double_at(index);
-    result_oop = java_lang_boxing_object::create(T_DOUBLE, &prim_value, CHECK_NULL);
+    result_oop = java_lang_boxing_object::create(T_DOUBLE, &prim_value, CHECK_NULL, true);
     break;
 
   default:

@@ -948,6 +948,17 @@ public:
   Array<AnnotationArray*>* fields_type_annotations() const {
     return (_annotations != NULL) ? _annotations->fields_type_annotations() : NULL;
   }
+
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  // allocation
+  instanceOop allocate_instance(TRAPS, bool alloc_public = false);
+
+  // additional member function to return a handle
+  instanceHandle allocate_instance_handle(TRAPS, bool alloc_public = false);
+
+  objArrayOop allocate_objArray(int n, int length, TRAPS, bool alloc_public = false);
+
+#else
   // allocation
   instanceOop allocate_instance(TRAPS);
 
@@ -955,6 +966,10 @@ public:
   instanceHandle allocate_instance_handle(TRAPS);
 
   objArrayOop allocate_objArray(int n, int length, TRAPS);
+
+#endif
+
+
   // Helper function
   static instanceOop register_finalizer(instanceOop i, TRAPS);
 

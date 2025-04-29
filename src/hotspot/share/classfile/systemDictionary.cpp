@@ -1930,9 +1930,13 @@ void SystemDictionary::initialize(TRAPS) {
   _resolution_errors   = new ResolutionErrorTable(_resolution_error_size);
   _invoke_method_table = new SymbolPropertyTable(_invoke_method_size);
   _pd_cache_table = new ProtectionDomainCacheTable(defaultProtectionDomainCacheSize);
-
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  // Allocate private object used as system class loader lock
+  oop system_loader_lock_obj = oopFactory::new_public_intArray(0, CHECK);
+#else
   // Allocate private object used as system class loader lock
   oop system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
+#endif
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
 #if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)

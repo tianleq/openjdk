@@ -49,6 +49,9 @@ class MemAllocator::Allocation: StackObj {
   bool                _allocated_outside_tlab;
   size_t              _allocated_tlab_size;
   bool                _tlab_end_reset_for_sample;
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  bool                _alloc_public;
+#endif
 
   bool check_out_of_memory();
   void verify_before();
@@ -78,6 +81,21 @@ public:
   {
     verify_before();
   }
+
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  Allocation(const MemAllocator& allocator, oop* obj_ptr, bool alloc_public)
+  : _allocator(allocator),
+    _thread(Thread::current()),
+    _obj_ptr(obj_ptr),
+    _overhead_limit_exceeded(false),
+    _allocated_outside_tlab(false),
+    _allocated_tlab_size(0),
+    _tlab_end_reset_for_sample(false),
+    _alloc_public(alloc_public)
+ {
+  verify_before();
+ }
+#endif
 
   ~Allocation() {
     if (!check_out_of_memory()) {
@@ -269,7 +287,12 @@ void MemAllocator::Allocation::notify_allocation() {
 
 HeapWord* MemAllocator::allocate_outside_tlab(Allocation& allocation) const {
   allocation._allocated_outside_tlab = true;
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  HeapWord* mem = allocation._alloc_public ? _heap->mem_allocate_public(_word_size, &allocation._overhead_limit_exceeded) : _heap->mem_allocate(_word_size, &allocation._overhead_limit_exceeded);
+#else
   HeapWord* mem = _heap->mem_allocate(_word_size, &allocation._overhead_limit_exceeded);
+#endif
+  
   if (mem == NULL) {
     return mem;
   }
@@ -385,6 +408,24 @@ oop MemAllocator::allocate() const {
   }
   return obj;
 }
+
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+oop MemAllocator::allocate_public() const {
+  oop obj = NULL;
+  {
+    Allocation allocation(*this, &obj, true);
+    HeapWord* mem = mem_allocate(allocation);
+    if (mem != NULL) {
+      obj = initialize(mem);
+    } else {
+      // The unhandled oop detector will poison local variable obj,
+      // so reset it to NULL if mem is NULL.
+      obj = NULL;
+    }
+  }
+  return obj;
+}
+#endif
 
 void MemAllocator::mem_clear(HeapWord* mem) const {
   assert(mem != NULL, "cannot initialize NULL object");

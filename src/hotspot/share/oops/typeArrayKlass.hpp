@@ -70,7 +70,11 @@ class TypeArrayKlass : public ArrayKlass {
   typeArrayOop allocate_common(int length, bool do_zero, TRAPS);
   typeArrayOop allocate(int length, TRAPS) { return allocate_common(length, true, THREAD); }
   oop multi_allocate(int rank, jint* sizes, TRAPS);
-
+  #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  typeArrayOop allocate_public_common(int length, bool do_zero, TRAPS);
+  typeArrayOop allocate_public(int length, TRAPS) { return allocate_public_common(length, true, THREAD); }
+  oop multi_allocate_public(int rank, jint* sizes, TRAPS);
+  #endif
   oop protection_domain() const { return NULL; }
 
   // Copying
