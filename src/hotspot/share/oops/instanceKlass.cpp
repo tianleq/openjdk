@@ -1271,10 +1271,10 @@ objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS, bool allo
   Klass* ak = array_klass(n, CHECK_NULL);
   objArrayOop o;
   if (alloc_public) {
-    o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length, 
+    o = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length, 
                                                       /* do_zero */ true, CHECK_NULL);
   } else {
-    o = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length,
+    o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length,
                                                              /* do_zero */ true, CHECK_NULL);
   } 
   
