@@ -169,11 +169,12 @@ int ObjArrayKlass::oop_size(oop obj) const {
   return objArrayOop(obj)->object_size();
 }
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-objArrayOop ObjArrayKlass::allocate(int length, TRAPS, bool alloc_public) {
+objArrayOop ObjArrayKlass::allocate_public(int length, TRAPS) {
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
-      return alloc_public ? (objArrayOop)Universe::heap()->public_array_allocate(this, size, length, /* do_zero */ true, THREAD) : (objArrayOop)Universe::heap()->array_allocate(this, size, length, /* do_zero */ true, THREAD);
+      return (objArrayOop)Universe::heap()->public_array_allocate(this, size, length, 
+                                                                  /* do_zero */ true, THREAD);
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
       JvmtiExport::post_array_size_exhausted();
@@ -183,7 +184,7 @@ objArrayOop ObjArrayKlass::allocate(int length, TRAPS, bool alloc_public) {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
   }
 }
-#else
+#endif 
 objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
@@ -199,7 +200,7 @@ objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
   }
 }
-#endif 
+
 
 static int multi_alloc_counter = 0;
 

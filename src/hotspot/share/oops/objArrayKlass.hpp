@@ -78,10 +78,10 @@ class ObjArrayKlass : public ArrayKlass {
   static Klass* allocate_objArray_klass(ClassLoaderData* loader_data,
                                           int n, Klass* element_klass, TRAPS);
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  objArrayOop allocate(int length, TRAPS, bool alloc_public = false);
-#else
-  objArrayOop allocate(int length, TRAPS);
+  objArrayOop allocate_public(int length, TRAPS);
 #endif
+  objArrayOop allocate(int length, TRAPS);
+
   oop multi_allocate(int rank, jint* sizes, TRAPS);
 
   // Copying

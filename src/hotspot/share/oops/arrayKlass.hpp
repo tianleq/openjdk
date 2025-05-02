@@ -80,10 +80,10 @@ class ArrayKlass: public Klass {
   // are always in higher memory.  The callers of these set that up.
   virtual oop multi_allocate(int rank, jint* sizes, TRAPS);
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  objArrayOop allocate_arrayArray(int n, int length, TRAPS, bool alloc_public = false);
-#else
-  objArrayOop allocate_arrayArray(int n, int length, TRAPS);
+  objArrayOop allocate_public_arrayArray(int n, int length, TRAPS);
 #endif
+  objArrayOop allocate_arrayArray(int n, int length, TRAPS);
+
 
   // find field according to JVM spec 5.4.3.2, returns the klass in which the field is defined
   Klass* find_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const;

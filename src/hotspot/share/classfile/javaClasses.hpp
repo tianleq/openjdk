@@ -99,10 +99,10 @@ class java_lang_String : AllStatic {
   static bool initialized;
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  static Handle basic_create(int length, bool byte_arr, TRAPS, bool alloc_public = false);
-#else
-  static Handle basic_create(int length, bool byte_arr, TRAPS);
+  static Handle basic_create_public(int length, bool byte_arr, TRAPS);
 #endif
+  static Handle basic_create(int length, bool byte_arr, TRAPS);
+
 
   static inline void set_coder(oop string, jbyte coder);
 
@@ -119,15 +119,15 @@ class java_lang_String : AllStatic {
 
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  static Handle create_from_unicode(jchar* unicode, int len, TRAPS, bool alloc_public = false);
-  static Handle create_from_str(const char* utf8_str, TRAPS, bool alloc_public = false);
-  static oop    create_oop_from_str(const char* utf8_str, TRAPS, bool alloc_public = false);
-#else
+  static Handle create_public_from_unicode(jchar* unicode, int len, TRAPS);
+  static Handle create_public_from_str(const char* utf8_str, TRAPS);
+  static oop    create_public_oop_from_str(const char* utf8_str, TRAPS);
+#endif
   // Instance creation
   static Handle create_from_unicode(jchar* unicode, int len, TRAPS);
   static Handle create_from_str(const char* utf8_str, TRAPS);
   static oop    create_oop_from_str(const char* utf8_str, TRAPS);
-#endif
+
   static oop    create_oop_from_unicode(jchar* unicode, int len, TRAPS);
   static Handle create_from_symbol(Symbol* symbol, TRAPS);
   static Handle create_from_platform_dependent_str(const char* str, TRAPS);
@@ -926,14 +926,14 @@ class java_lang_boxing_object: AllStatic {
 
  public:
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  static oop initialize_and_allocate(BasicType type, TRAPS, bool alloc_public = false);
+  static oop initialize_and_allocate_public(BasicType type, TRAPS);
   // Allocation. Returns a boxed value, or NULL for invalid type.
-  static oop create(BasicType type, jvalue* value, TRAPS, bool alloc_public = false);
-#else
+  static oop create_public(BasicType type, jvalue* value, TRAPS);
+#endif
   static oop initialize_and_allocate(BasicType type, TRAPS);
   // Allocation. Returns a boxed value, or NULL for invalid type.
   static oop create(BasicType type, jvalue* value, TRAPS);
-#endif
+
   // Accessors. Returns the basic type being boxed, or T_ILLEGAL for invalid oop.
   static BasicType get_value(oop box, jvalue* value);
   static BasicType set_value(oop box, jvalue* value);

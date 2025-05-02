@@ -80,13 +80,13 @@ class oopFactory: AllStatic {
   static typeArrayOop    new_public_byteArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::byteArrayKlassObj  ())->allocate_public(length, THREAD); }
   static typeArrayOop    new_public_shortArray (int length, TRAPS) { return TypeArrayKlass::cast(Universe::shortArrayKlassObj ())->allocate_public(length, THREAD); }
   static typeArrayOop    new_public_intArray   (int length, TRAPS) { return TypeArrayKlass::cast(Universe::intArrayKlassObj   ())->allocate_public(length, THREAD); }
-  static typeArrayOop    new_public_longArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::longArrayKlassObj  ())->allocate(length, THREAD); }
+  static typeArrayOop    new_public_longArray  (int length, TRAPS) { return TypeArrayKlass::cast(Universe::longArrayKlassObj  ())->allocate_public(length, THREAD); }
 
   // create java.lang.Object[]
   static objArrayOop     new_public_objectArray(int length, TRAPS)  {
     assert(Universe::objectArrayKlassObj() != NULL, "Too early?");
     return ObjArrayKlass::
-      cast(Universe::objectArrayKlassObj())->allocate(length, THREAD, true);
+      cast(Universe::objectArrayKlassObj())->allocate_public(length, THREAD);
   }
 
   static typeArrayOop    new_public_charArray           (const char* utf8_str,  TRAPS);

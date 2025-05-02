@@ -951,14 +951,13 @@ public:
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
   // allocation
-  instanceOop allocate_instance(TRAPS, bool alloc_public = false);
+  instanceOop allocate_public_instance(TRAPS);
 
   // additional member function to return a handle
-  instanceHandle allocate_instance_handle(TRAPS, bool alloc_public = false);
+  instanceHandle allocate_public_instance_handle(TRAPS);
 
-  objArrayOop allocate_objArray(int n, int length, TRAPS, bool alloc_public = false);
-
-#else
+  objArrayOop allocate_public_objArray(int n, int length, TRAPS);
+#endif
   // allocation
   instanceOop allocate_instance(TRAPS);
 
@@ -967,7 +966,7 @@ public:
 
   objArrayOop allocate_objArray(int n, int length, TRAPS);
 
-#endif
+
 
 
   // Helper function

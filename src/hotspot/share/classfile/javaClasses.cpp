@@ -239,31 +239,20 @@ void java_lang_String::set_compact_strings(bool value) {
 }
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-Handle java_lang_String::basic_create(int length, bool is_latin1, TRAPS, bool alloc_public) {
+Handle java_lang_String::basic_create_public(int length, bool is_latin1, TRAPS) {
   assert(initialized, "Must be initialized");
   assert(CompactStrings || !is_latin1, "Must be UTF16 without CompactStrings");
 
   // Create the String object first, so there's a chance that the String
   // and the char array it points to end up in the same cache line.
-  oop obj;
-  if (alloc_public) {
-    obj = SystemDictionary::String_klass()->allocate_instance(CHECK_NH, true);
-  } else {
-    obj = SystemDictionary::String_klass()->allocate_instance(CHECK_NH);
-  }
-
-
+  oop obj = SystemDictionary::String_klass()->allocate_public_instance(CHECK_NH);;
+  
   // Create the char array.  The String object must be handlized here
   // because GC can happen as a result of the allocation attempt.
   Handle h_obj(THREAD, obj);
   int arr_length = is_latin1 ? length : length << 1; // 2 bytes per UTF16.
-  typeArrayOop buffer;
-  if (alloc_public) {
-    buffer = oopFactory::new_public_byteArray(arr_length, CHECK_NH);
-  } else {
-    buffer = oopFactory::new_byteArray(arr_length, CHECK_NH);
-  }
-
+  typeArrayOop buffer = oopFactory::new_public_byteArray(arr_length, CHECK_NH);
+ 
   // Point the String at the char array
   obj = h_obj();
   set_value(obj, buffer);
@@ -272,9 +261,9 @@ Handle java_lang_String::basic_create(int length, bool is_latin1, TRAPS, bool al
   return h_obj;
 }
 
-Handle java_lang_String::create_from_unicode(jchar* unicode, int length, TRAPS, bool alloc_public) {
+Handle java_lang_String::create_public_from_unicode(jchar* unicode, int length, TRAPS) {
   bool is_latin1 = CompactStrings && UNICODE::is_latin1(unicode, length);
-  Handle h_obj = basic_create(length, is_latin1, CHECK_NH, alloc_public);
+  Handle h_obj = basic_create_public(length, is_latin1, CHECK_NH);
   typeArrayOop buffer = value(h_obj());
   assert(TypeArrayKlass::cast(buffer->klass())->element_type() == T_BYTE, "only byte[]");
   if (is_latin1) {
@@ -302,7 +291,7 @@ Handle java_lang_String::create_from_unicode(jchar* unicode, int length, TRAPS, 
   return h_obj;
 }
 
-Handle java_lang_String::create_from_str(const char* utf8_str, TRAPS, bool alloc_public) {
+Handle java_lang_String::create_public_from_str(const char* utf8_str, TRAPS) {
   if (utf8_str == NULL) {
     return Handle();
   }
@@ -313,7 +302,7 @@ Handle java_lang_String::create_from_str(const char* utf8_str, TRAPS, bool alloc
     is_latin1 = false;
   }
 
-  Handle h_obj = basic_create(length, is_latin1, CHECK_NH, alloc_public);
+  Handle h_obj = basic_create_public(length, is_latin1, CHECK_NH);
   if (length > 0) {
     if (!has_multibyte) {
       const jbyte* src = reinterpret_cast<const jbyte*>(utf8_str);
@@ -344,12 +333,12 @@ Handle java_lang_String::create_from_str(const char* utf8_str, TRAPS, bool alloc
   return h_obj;
 }
 
-oop java_lang_String::create_oop_from_str(const char* utf8_str, TRAPS, bool alloc_public) {
-  Handle h_obj = create_from_str(utf8_str, CHECK_0, alloc_public);
+oop java_lang_String::create_public_oop_from_str(const char* utf8_str, TRAPS) {
+  Handle h_obj = create_public_from_str(utf8_str, CHECK_0);
   return h_obj();
 }
 
-#else
+#endif
 
 Handle java_lang_String::basic_create(int length, bool is_latin1, TRAPS) {
   assert(initialized, "Must be initialized");
@@ -450,8 +439,6 @@ oop java_lang_String::create_oop_from_str(const char* utf8_str, TRAPS) {
   Handle h_obj = create_from_str(utf8_str, CHECK_0);
   return h_obj();
 }
-
-#endif
 
 oop java_lang_String::create_oop_from_unicode(jchar* unicode, int length, TRAPS) {
   Handle h_obj = create_from_unicode(unicode, length, CHECK_0);
@@ -3520,16 +3507,16 @@ void reflect_UnsafeStaticFieldAccessorImpl::serialize_offsets(SerializeClosure* 
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
 
-oop java_lang_boxing_object::initialize_and_allocate(BasicType type, TRAPS, bool alloc_public) {
+oop java_lang_boxing_object::initialize_and_allocate_public(BasicType type, TRAPS) {
   Klass* k = SystemDictionary::box_klass(type);
   if (k == NULL)  return NULL;
   InstanceKlass* ik = InstanceKlass::cast(k);
   if (!ik->is_initialized())  ik->initialize(CHECK_0);
-  return ik->allocate_instance(THREAD, alloc_public);
+  return ik->allocate_public_instance(THREAD);
 }
 
-oop java_lang_boxing_object::create(BasicType type, jvalue* value, TRAPS, bool alloc_public) {
-  oop box = initialize_and_allocate(type, CHECK_0, alloc_public);
+oop java_lang_boxing_object::create_public(BasicType type, jvalue* value, TRAPS) {
+  oop box = initialize_and_allocate_public(type, CHECK_0);
   if (box == NULL)  return NULL;
   switch (type) {
     case T_BOOLEAN:
@@ -3561,7 +3548,7 @@ oop java_lang_boxing_object::create(BasicType type, jvalue* value, TRAPS, bool a
   }
   return box;
 }
-#else
+#endif
 
 oop java_lang_boxing_object::initialize_and_allocate(BasicType type, TRAPS) {
   Klass* k = SystemDictionary::box_klass(type);
@@ -3604,7 +3591,7 @@ oop java_lang_boxing_object::create(BasicType type, jvalue* value, TRAPS) {
   }
   return box;
 }
-#endif
+
 
 BasicType java_lang_boxing_object::basic_type(oop box) {
   if (box == NULL)  return T_ILLEGAL;
@@ -3970,7 +3957,7 @@ oop java_lang_invoke_ResolvedMethodName::find_resolved_method(const methodHandle
       k->initialize(CHECK_NULL);
     }
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  oop new_resolved_method = k->allocate_instance(CHECK_NULL, true);
+  oop new_resolved_method = k->allocate_public_instance(CHECK_NULL);
 #else
   oop new_resolved_method = k->allocate_instance(CHECK_NULL);
 #endif

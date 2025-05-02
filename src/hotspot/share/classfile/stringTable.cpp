@@ -361,7 +361,7 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
     string_h = string_or_null_h;
   } else {
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-    string_h = java_lang_String::create_from_unicode(name, len, CHECK_NULL, true);
+    string_h = java_lang_String::create_public_from_unicode(name, len, CHECK_NULL);
 #else
     string_h = java_lang_String::create_from_unicode(name, len, CHECK_NULL);
 #endif

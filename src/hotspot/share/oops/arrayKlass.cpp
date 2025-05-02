@@ -131,7 +131,7 @@ bool ArrayKlass::compute_is_subtype_of(Klass* k) {
 }
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS, bool alloc_public) {
+objArrayOop ArrayKlass::allocate_public_arrayArray(int n, int length, TRAPS) {
   if (length < 0) {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
   }
@@ -143,19 +143,13 @@ objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS, bool alloc
   int size = objArrayOopDesc::object_size(length);
   Klass* k = array_klass(n+dimension(), CHECK_0);
   ArrayKlass* ak = ArrayKlass::cast(k);
-  objArrayOop o;
-  if (alloc_public) {
-    o = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length,
-                                                      /* do_zero */ true, CHECK_0);
-  } else {
-    o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length,
-                                                      /* do_zero */ true, CHECK_0);
-  }
+  objArrayOop o = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length,
+                                                                       /* do_zero */ true, CHECK_0);
   
   // initialization to NULL not necessary, area already cleared
   return o;
 }
-#else
+#endif
 objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS) {
   if (length < 0) {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
@@ -173,7 +167,7 @@ objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS) {
   // initialization to NULL not necessary, area already cleared
   return o;
 }
-#endif
+
 
 void ArrayKlass::array_klasses_do(void f(Klass* k, TRAPS), TRAPS) {
   Klass* k = this;

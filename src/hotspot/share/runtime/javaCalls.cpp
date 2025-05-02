@@ -307,7 +307,12 @@ Handle JavaCalls::construct_new_instance(InstanceKlass* klass, Symbol* construct
   klass->initialize(CHECK_NH); // Quick no-op if already initialized.
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
   // thread oop is public by default, so make sure they have the alloc public semantic
-  Handle obj = klass->allocate_instance_handle(CHECK_NH, klass == SystemDictionary::Thread_klass());
+  Handle obj;
+  if (klass == SystemDictionary::Thread_klass()) {
+    obj = klass->allocate_public_instance_handle(CHECK_NH);
+  } else {
+    obj = klass->allocate_instance_handle(CHECK_NH);
+  }
 #else
   Handle obj = klass->allocate_instance_handle(CHECK_NH);
 #endif

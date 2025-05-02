@@ -1061,25 +1061,25 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
   case JVM_CONSTANT_Integer:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.i = this_cp->int_at(index);
-    result_oop = java_lang_boxing_object::create(T_INT, &prim_value, CHECK_NULL, true);
+    result_oop = java_lang_boxing_object::create_public(T_INT, &prim_value, CHECK_NULL);
     break;
 
   case JVM_CONSTANT_Float:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.f = this_cp->float_at(index);
-    result_oop = java_lang_boxing_object::create(T_FLOAT, &prim_value, CHECK_NULL, true);
+    result_oop = java_lang_boxing_object::create_public(T_FLOAT, &prim_value, CHECK_NULL);
     break;
 
   case JVM_CONSTANT_Long:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.j = this_cp->long_at(index);
-    result_oop = java_lang_boxing_object::create(T_LONG, &prim_value, CHECK_NULL, true);
+    result_oop = java_lang_boxing_object::create_public(T_LONG, &prim_value, CHECK_NULL);
     break;
 
   case JVM_CONSTANT_Double:
     assert(cache_index == _no_index_sentinel, "should not have been set");
     prim_value.d = this_cp->double_at(index);
-    result_oop = java_lang_boxing_object::create(T_DOUBLE, &prim_value, CHECK_NULL, true);
+    result_oop = java_lang_boxing_object::create_public(T_DOUBLE, &prim_value, CHECK_NULL);
     break;
 
   default:

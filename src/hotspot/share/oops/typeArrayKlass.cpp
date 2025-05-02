@@ -126,12 +126,27 @@ oop TypeArrayKlass::multi_allocate(int rank, jint* last_size, TRAPS) {
 
 typeArrayOop TypeArrayKlass::allocate_public_common(int length, bool do_zero, TRAPS) {
   
-  return allocate_common(length, do_zero, THREAD);
+  assert(log2_element_size() >= 0, "bad scale");
+  if (length >= 0) {
+    if (length <= max_length()) {
+      size_t size = typeArrayOopDesc::object_size(layout_helper(), length);
+      return (typeArrayOop)Universe::heap()->public_array_allocate(this, (int)size, length,
+                                                            do_zero, CHECK_NULL);
+    } else {
+      report_java_out_of_memory("Requested array size exceeds VM limit");
+      JvmtiExport::post_array_size_exhausted();
+      THROW_OOP_0(Universe::out_of_memory_error_array_size());
+    }
+  } else {
+    THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
+  }
 }
 
 oop TypeArrayKlass::multi_allocate_public(int rank, jint* last_size, TRAPS) {
-
-  return multi_allocate(rank, last_size, THREAD);
+// For typeArrays this is only called for the last dimension
+  assert(rank == 1, "just checking");
+  int length = *last_size;
+  return allocate_public(length, THREAD);
 }
 
 #endif

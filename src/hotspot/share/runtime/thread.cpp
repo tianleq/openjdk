@@ -1116,7 +1116,7 @@ static oop create_initial_thread(Handle thread_group, JavaThread* thread,
   InstanceKlass* ik = SystemDictionary::Thread_klass();
   assert(ik->is_initialized(), "must be");
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  instanceHandle thread_oop = ik->allocate_instance_handle(CHECK_NULL, true);
+  instanceHandle thread_oop = ik->allocate_public_instance_handle(CHECK_NULL);
 #else
   instanceHandle thread_oop = ik->allocate_instance_handle(CHECK_NULL);
 #endif
@@ -1254,7 +1254,7 @@ void JavaThread::allocate_threadObj(Handle thread_group, const char* thread_name
   InstanceKlass* ik = SystemDictionary::Thread_klass();
   assert(ik->is_initialized(), "must be");
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  instanceHandle thread_oop = ik->allocate_instance_handle(CHECK, true);
+  instanceHandle thread_oop = ik->allocate_public_instance_handle(CHECK);
 #else
   instanceHandle thread_oop = ik->allocate_instance_handle(CHECK);
 #endif

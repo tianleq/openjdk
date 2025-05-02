@@ -1236,16 +1236,11 @@ instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
 
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
 // allocation
-instanceOop InstanceKlass::allocate_instance(TRAPS, bool alloc_public) {
+instanceOop InstanceKlass::allocate_public_instance(TRAPS) {
   bool has_finalizer_flag = has_finalizer(); // Query before possible GC
   int size = size_helper();  // Query before forming handle.
 
-  instanceOop i;
-  if (alloc_public) {
-    i = (instanceOop)Universe::heap()->public_obj_allocate(this, size, CHECK_NULL);
-  } else {
-    i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
-  }
+  instanceOop i = (instanceOop)Universe::heap()->public_obj_allocate(this, size, CHECK_NULL);
 
   if (has_finalizer_flag && !RegisterFinalizersAtInit) {
     i = register_finalizer(i, CHECK_NULL);
@@ -1254,11 +1249,11 @@ instanceOop InstanceKlass::allocate_instance(TRAPS, bool alloc_public) {
 }
 
 // additional member function to return a handle
-instanceHandle InstanceKlass::allocate_instance_handle(TRAPS, bool alloc_public) {
-  return instanceHandle(THREAD, allocate_instance(THREAD, alloc_public));;
+instanceHandle InstanceKlass::allocate_public_instance_handle(TRAPS) {
+  return instanceHandle(THREAD, allocate_public_instance(THREAD));;
 }
 
-objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS, bool alloc_public) {
+objArrayOop InstanceKlass::allocate_public_objArray(int n, int length, TRAPS) {
   if (length < 0)  {
     THROW_MSG_0(vmSymbols::java_lang_NegativeArraySizeException(), err_msg("%d", length));
   }
@@ -1269,19 +1264,13 @@ objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS, bool allo
   }
   int size = objArrayOopDesc::object_size(length);
   Klass* ak = array_klass(n, CHECK_NULL);
-  objArrayOop o;
-  if (alloc_public) {
-    o = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length, 
-                                                      /* do_zero */ true, CHECK_NULL);
-  } else {
-    o = (objArrayOop)Universe::heap()->array_allocate(ak, size, length,
-                                                             /* do_zero */ true, CHECK_NULL);
-  } 
-  
+  objArrayOop o  = (objArrayOop)Universe::heap()->public_array_allocate(ak, size, length, 
+                                                                        /* do_zero */ true, CHECK_NULL);
+ 
   return o;
 }
 
-#else 
+#endif
 
 objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
   if (length < 0)  {
@@ -1316,7 +1305,7 @@ instanceHandle InstanceKlass::allocate_instance_handle(TRAPS) {
   return instanceHandle(THREAD, allocate_instance(THREAD));
 }
 
-#endif
+
 
 void InstanceKlass::check_valid_for_instantiation(bool throwError, TRAPS) {
   if (is_interface() || is_abstract()) {
