@@ -356,7 +356,7 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
                            int len, uintx hash, TRAPS) {
   HandleMark hm(THREAD);  // cleanup strings created
   Handle string_h;
-
+  
   if (!string_or_null_h.is_null()) {
     string_h = string_or_null_h;
   } else {
@@ -370,9 +370,13 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
   if (UseThirdPartyHeap) {
 #if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
     JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
-    ::mmtk_publish_object_with_fence(thread, string_h());
+    ::mmtk_publish_runtime_object_with_fence(thread, string_h());
 #else
-    ::mmtk_publish_object_with_fence(string_h());
+    if (!string_or_null_h.is_null()) {
+      ::mmtk_publish_object_with_fence(string_h());
+    } else {
+      ::mmtk_publish_runtime_object_with_fence(string_h());
+    }
 #endif
   }
 #endif

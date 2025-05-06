@@ -408,9 +408,9 @@ void Universe::genesis(TRAPS) {
 #if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
       assert(THREAD->is_Java_thread(), "thread is not a Java thread");
       JavaThread *thread = (JavaThread *) THREAD;
-      ::mmtk_publish_object_with_fence(thread, p);
+      ::mmtk_publish_runtime_object_with_fence(thread, p);
 #else
-      ::mmtk_publish_object_with_fence(p);
+      ::mmtk_publish_runtime_object_with_fence(p);
 #endif
     }
 #endif
@@ -1153,36 +1153,36 @@ bool universe_post_init() {
     JavaThread *thread = (JavaThread *) THREAD;
 
     // publish root objects
-    ::mmtk_publish_object_with_fence(thread, the_empty_class_klass_array);
-    ::mmtk_publish_object_with_fence(thread, out_of_memory_error_java_heap);
-    ::mmtk_publish_object_with_fence(thread, out_of_memory_error_metaspace);
-    ::mmtk_publish_object_with_fence(thread, out_of_memory_error_class_metaspace);
-    ::mmtk_publish_object_with_fence(thread, delayed_stack_overflow_error_message);
-    ::mmtk_publish_object_with_fence(thread, out_of_memory_error_array_size);
-    ::mmtk_publish_object_with_fence(thread, out_of_memory_error_gc_overhead_limit);
-    ::mmtk_publish_object_with_fence(thread, out_of_memory_error_realloc_objects);
+    ::mmtk_publish_runtime_object_with_fence(thread, the_empty_class_klass_array);
+    ::mmtk_publish_runtime_object_with_fence(thread, out_of_memory_error_java_heap);
+    ::mmtk_publish_runtime_object_with_fence(thread, out_of_memory_error_metaspace);
+    ::mmtk_publish_runtime_object_with_fence(thread, out_of_memory_error_class_metaspace);
+    ::mmtk_publish_runtime_object_with_fence(thread, delayed_stack_overflow_error_message);
+    ::mmtk_publish_runtime_object_with_fence(thread, out_of_memory_error_array_size);
+    ::mmtk_publish_runtime_object_with_fence(thread, out_of_memory_error_gc_overhead_limit);
+    ::mmtk_publish_runtime_object_with_fence(thread, out_of_memory_error_realloc_objects);
 
-    ::mmtk_publish_object_with_fence(thread, null_ptr_exception_instance);
-    ::mmtk_publish_object_with_fence(thread, arithmetic_exception_instance);
-    ::mmtk_publish_object_with_fence(thread, virtual_machine_error_instance);
-    ::mmtk_publish_object_with_fence(thread, vm_exception);
-    ::mmtk_publish_object_with_fence(thread, preallocated_out_of_memory_error_array);
+    ::mmtk_publish_runtime_object_with_fence(thread, null_ptr_exception_instance);
+    ::mmtk_publish_runtime_object_with_fence(thread, arithmetic_exception_instance);
+    ::mmtk_publish_runtime_object_with_fence(thread, virtual_machine_error_instance);
+    ::mmtk_publish_runtime_object_with_fence(thread, vm_exception);
+    ::mmtk_publish_runtime_object_with_fence(thread, preallocated_out_of_memory_error_array);
 #else
     // publish root objects
-    ::mmtk_publish_object_with_fence(the_empty_class_klass_array);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_java_heap);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_metaspace);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_class_metaspace);
-    ::mmtk_publish_object_with_fence(delayed_stack_overflow_error_message);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_array_size);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_gc_overhead_limit);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_realloc_objects);
+    ::mmtk_publish_runtime_object_with_fence(the_empty_class_klass_array);
+    ::mmtk_publish_runtime_object_with_fence(out_of_memory_error_java_heap);
+    ::mmtk_publish_runtime_object_with_fence(out_of_memory_error_metaspace);
+    ::mmtk_publish_runtime_object_with_fence(out_of_memory_error_class_metaspace);
+    ::mmtk_publish_runtime_object_with_fence(delayed_stack_overflow_error_message);
+    ::mmtk_publish_runtime_object_with_fence(out_of_memory_error_array_size);
+    ::mmtk_publish_runtime_object_with_fence(out_of_memory_error_gc_overhead_limit);
+    ::mmtk_publish_runtime_object_with_fence(out_of_memory_error_realloc_objects);
 
-    ::mmtk_publish_object_with_fence(null_ptr_exception_instance);
-    ::mmtk_publish_object_with_fence(arithmetic_exception_instance);
-    ::mmtk_publish_object_with_fence(virtual_machine_error_instance);
-    ::mmtk_publish_object_with_fence(vm_exception);
-    ::mmtk_publish_object_with_fence(preallocated_out_of_memory_error_array);
+    ::mmtk_publish_runtime_object_with_fence(null_ptr_exception_instance);
+    ::mmtk_publish_runtime_object_with_fence(arithmetic_exception_instance);
+    ::mmtk_publish_runtime_object_with_fence(virtual_machine_error_instance);
+    ::mmtk_publish_runtime_object_with_fence(vm_exception);
+    ::mmtk_publish_runtime_object_with_fence(preallocated_out_of_memory_error_array);
 #endif
   }
 #endif
@@ -1659,9 +1659,21 @@ extern "C" {
     // make sure the publishing occurs before the write
     OrderAccess::fence();
   }
+
+  extern void mmtk_publish_runtime_object_with_fence(JavaThread* thread, void *object) {
+    ::mmtk_publish_object(thread, object);
+    // make sure the publishing occurs before the write
+    OrderAccess::fence();
+  }
 #else 
   extern void mmtk_publish_object_with_fence(void *object) {
     ::mmtk_publish_object(object);
+    // make sure the publishing occurs before the write
+    OrderAccess::fence();
+  }
+
+  extern void mmtk_publish_runtime_object_with_fence(void *object) {
+    ::mmtk_publish_runtime_object(object);
     // make sure the publishing occurs before the write
     OrderAccess::fence();
   }

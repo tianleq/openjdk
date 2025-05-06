@@ -49,6 +49,8 @@ extern "C" {
 #else
   extern void mmtk_publish_object_with_fence(void *object);
   extern void mmtk_publish_object(void *object);
+  extern void mmtk_publish_runtime_object(void *object);
+  extern void mmtk_publish_runtime_object_with_fence(void *object);
 #endif
 
 #endif
