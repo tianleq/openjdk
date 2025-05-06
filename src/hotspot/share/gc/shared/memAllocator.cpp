@@ -78,6 +78,9 @@ public:
       _allocated_outside_tlab(false),
       _allocated_tlab_size(0),
       _tlab_end_reset_for_sample(false)
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+      ,_alloc_public(false)
+#endif
   {
     verify_before();
   }
