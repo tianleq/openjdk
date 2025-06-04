@@ -1230,14 +1230,14 @@ instanceOop InstanceKlass::register_finalizer(instanceOop i, TRAPS) {
   }
   instanceHandle h_i(THREAD, i);
 
-  // If we are using third party heap, call their finalizer register method instead.
-#ifdef INCLUDE_THIRD_PARTY_HEAP
-  // FIXME: Switch to openjdk style finalizer processing
-  if (UseThirdPartyHeap) {
-    third_party_heap::register_finalizer((void*) i);
-    return h_i();
-  }
-#endif
+//   // If we are using third party heap, call their finalizer register method instead.
+// #ifdef INCLUDE_THIRD_PARTY_HEAP
+//   // FIXME: Switch to openjdk style finalizer processing
+//   if (UseThirdPartyHeap) {
+//     third_party_heap::register_finalizer((void*) i);
+//     return h_i();
+//   }
+// #endif
 
   // Pass the handle as argument, JavaCalls::call expects oop as jobjects
   JavaValue result(T_VOID);
