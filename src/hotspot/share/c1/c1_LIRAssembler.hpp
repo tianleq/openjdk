@@ -90,7 +90,9 @@ class LIR_Assembler: public CompilationResourceObj {
   void emit_stubs(CodeStubList* stub_list);
 
   // addresses
+public:
   Address as_Address(LIR_Address* addr);
+private:
   Address as_Address_lo(LIR_Address* addr);
   Address as_Address_hi(LIR_Address* addr);
 
