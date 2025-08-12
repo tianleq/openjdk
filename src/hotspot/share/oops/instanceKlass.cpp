@@ -1293,8 +1293,18 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
   int size = size_helper();  // Query before forming handle.
 
   instanceOop i;
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+
+  if (UseThirdPartyHeap && this->is_subtype_of(SystemDictionary::Thread_klass())) {
+    i = (instanceOop)Universe::heap()->public_obj_allocate(this, size, CHECK_NULL);
+    ::mmtk_publish_runtime_object_with_fence(i);
+  } else {
+    i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
+  }
+#else
 
   i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
+#endif
   if (has_finalizer_flag && !RegisterFinalizersAtInit) {
     i = register_finalizer(i, CHECK_NULL);
   }
@@ -1302,7 +1312,17 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
 }
 
 instanceHandle InstanceKlass::allocate_instance_handle(TRAPS) {
+#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+  if (UseThirdPartyHeap && this->is_subtype_of(SystemDictionary::Thread_klass())) {
+    instanceOop i = allocate_public_instance(THREAD);
+    ::mmtk_publish_runtime_object_with_fence(i);
+    return instanceHandle(THREAD, i);
+  } else {
+    return instanceHandle(THREAD, allocate_instance(THREAD));
+  }
+#else
   return instanceHandle(THREAD, allocate_instance(THREAD));
+#endif
 }
 
 

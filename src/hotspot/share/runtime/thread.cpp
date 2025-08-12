@@ -1115,11 +1115,7 @@ static oop create_initial_thread(Handle thread_group, JavaThread* thread,
                                  TRAPS) {
   InstanceKlass* ik = SystemDictionary::Thread_klass();
   assert(ik->is_initialized(), "must be");
-#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  instanceHandle thread_oop = ik->allocate_public_instance_handle(CHECK_NULL);
-#else
   instanceHandle thread_oop = ik->allocate_instance_handle(CHECK_NULL);
-#endif
 
   // Cannot use JavaCalls::construct_new_instance because the java.lang.Thread
   // constructor calls Thread.current(), which must be set here for the
@@ -1253,11 +1249,7 @@ void JavaThread::allocate_threadObj(Handle thread_group, const char* thread_name
 
   InstanceKlass* ik = SystemDictionary::Thread_klass();
   assert(ik->is_initialized(), "must be");
-#if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  instanceHandle thread_oop = ik->allocate_public_instance_handle(CHECK);
-#else
   instanceHandle thread_oop = ik->allocate_instance_handle(CHECK);
-#endif
 
   // We are called from jni_AttachCurrentThread/jni_AttachCurrentThreadAsDaemon.
   // We cannot use JavaCalls::construct_new_instance because the java.lang.Thread
@@ -3192,11 +3184,12 @@ void JavaThread::set_threadObj(oop p) {
 // A thread cannot create itself, so by definition, they are public 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
-    if (p) ::mmtk_publish_object_with_fence(this, p);
-#else
-    if (p) ::mmtk_publish_object_with_fence(p);
-#endif
+// #if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+//     if (p) ::mmtk_publish_object_with_fence(this, p);
+// #else
+//     if (p) ::mmtk_publish_object_with_fence(p);
+// #endif
+    assert(!p || ::mmtk_is_object_published(p), "thread oop is not published");
   }
 #endif
   _threadObj = p; 
