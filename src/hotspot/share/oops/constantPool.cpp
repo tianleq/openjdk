@@ -1104,7 +1104,7 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, new_result);
 #else
-    ::mmtk_publish_object_with_fence(new_result);
+    ::mmtk_publish_object_with_fence(THREAD, new_result);
 #endif
   }
 #endif

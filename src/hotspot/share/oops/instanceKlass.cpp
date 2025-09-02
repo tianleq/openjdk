@@ -1297,7 +1297,7 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
 
   if (UseThirdPartyHeap && this->is_subtype_of(SystemDictionary::Thread_klass())) {
     i = (instanceOop)Universe::heap()->public_obj_allocate(this, size, CHECK_NULL);
-    ::mmtk_publish_runtime_object_with_fence(i);
+    ::mmtk_publish_runtime_object_with_fence(THREAD, i);
   } else {
     i = (instanceOop)Universe::heap()->obj_allocate(this, size, CHECK_NULL);
   }
@@ -1315,7 +1315,7 @@ instanceHandle InstanceKlass::allocate_instance_handle(TRAPS) {
 #if defined(MMTK_ENABLE_THREAD_LOCAL_GC)
   if (UseThirdPartyHeap && this->is_subtype_of(SystemDictionary::Thread_klass())) {
     instanceOop i = allocate_public_instance(THREAD);
-    ::mmtk_publish_runtime_object_with_fence(i);
+    ::mmtk_publish_runtime_object_with_fence(THREAD, i);
     return instanceHandle(THREAD, i);
   } else {
     return instanceHandle(THREAD, allocate_instance(THREAD));

@@ -372,10 +372,11 @@ oop StringTable::do_intern(Handle string_or_null_h, jchar* name,
     JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
     ::mmtk_publish_runtime_object_with_fence(thread, string_h());
 #else
+    JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
     if (!string_or_null_h.is_null()) {
-      ::mmtk_publish_object_with_fence(string_h());
+      ::mmtk_publish_object_with_fence(thread, string_h());
     } else {
-      ::mmtk_publish_runtime_object_with_fence(string_h());
+      ::mmtk_publish_runtime_object_with_fence(thread, string_h());
     }
 #endif
   }

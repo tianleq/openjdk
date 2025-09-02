@@ -143,7 +143,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, java_system_loader);
 #else
-    ::mmtk_publish_object_with_fence(java_system_loader);
+    ::mmtk_publish_object_with_fence(THREAD, java_system_loader);
 #endif
   }
 #endif
@@ -162,7 +162,7 @@ void SystemDictionary::compute_java_loaders(TRAPS) {
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, java_platform_loader);
 #else
-    ::mmtk_publish_object_with_fence(java_platform_loader);
+    ::mmtk_publish_object_with_fence(THREAD, java_platform_loader);
 #endif
   }
 #endif
@@ -1944,7 +1944,7 @@ void SystemDictionary::initialize(TRAPS) {
     JavaThread *thread = (JavaThread *) THREAD;
     ::mmtk_publish_object_with_fence(thread, system_loader_lock_obj);
 #else
-    ::mmtk_publish_object_with_fence(system_loader_lock_obj);
+    ::mmtk_publish_object_with_fence(THREAD, system_loader_lock_obj);
 #endif
   }
 #endif
@@ -2737,7 +2737,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
         JavaThread *thread = (JavaThread *) THREAD;
         ::mmtk_publish_object_with_fence(thread, m);
 #else
-        ::mmtk_publish_object_with_fence(m);
+        ::mmtk_publish_object_with_fence(THREAD, m);
 #endif
       }
 #endif
