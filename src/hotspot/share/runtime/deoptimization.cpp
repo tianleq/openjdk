@@ -236,7 +236,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
           realloc_failures = realloc_objects(thread, &deoptee, objects, THREAD);
         JRT_END
         bool skip_internal = (cm != NULL) && !cm->is_compiled_by_jvmci();
-        reassign_fields(&deoptee, &map, objects, realloc_failures, skip_internal);
+        reassign_fields(&deoptee, &map, objects, realloc_failures, skip_internal, thread);
 #ifndef PRODUCT
         if (TraceDeoptimization) {
           ttyLocker ttyl;
@@ -300,7 +300,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     GrowableArray<ScopeValue*>* expressions = trap_scope->expressions();
     guarantee(expressions != NULL && expressions->length() > 0, "must have exception to throw");
     ScopeValue* topOfStack = expressions->top();
-    exceptionObject = StackValue::create_stack_value(&deoptee, &map, topOfStack)->get_obj();
+    exceptionObject = StackValue::create_stack_value(&deoptee, &map, topOfStack, thread)->get_obj();
     guarantee(exceptionObject() != NULL, "exception oop can not be null");
   }
 
@@ -856,17 +856,17 @@ bool Deoptimization::realloc_objects(JavaThread* thread, frame* fr, GrowableArra
 }
 
 // restore elements of an eliminated type array
-void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, typeArrayOop obj, BasicType type) {
+void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, typeArrayOop obj, BasicType type, JavaThread* thread) {
   int index = 0;
   intptr_t val;
 
   for (int i = 0; i < sv->field_size(); i++) {
-    StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(i));
+    StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(i), thread);
     switch(type) {
     case T_LONG: case T_DOUBLE: {
       assert(value->type() == T_INT, "Agreement.");
       StackValue* low =
-        StackValue::create_stack_value(fr, reg_map, sv->field_at(++i));
+        StackValue::create_stack_value(fr, reg_map, sv->field_at(++i), thread);
 #ifdef _LP64
       jlong res = (jlong)low->get_int();
 #else
@@ -900,7 +900,7 @@ void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_ma
       }
 
       if (big_value) {
-        StackValue* low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++i));
+        StackValue* low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++i), thread);
   #ifdef _LP64
         jlong res = (jlong)low->get_int();
   #else
@@ -953,9 +953,9 @@ void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_ma
 
 
 // restore fields of an eliminated object array
-void Deoptimization::reassign_object_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, objArrayOop obj) {
+void Deoptimization::reassign_object_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, objArrayOop obj, JavaThread* thread) {
   for (int i = 0; i < sv->field_size(); i++) {
-    StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(i));
+    StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(i), thread);
     assert(value->type() == T_OBJECT, "object element expected");
     obj->obj_at_put(i, value->get_obj()());
   }
@@ -978,9 +978,9 @@ int compare(ReassignedField* left, ReassignedField* right) {
 
 // Restore fields of an eliminated instance object using the same field order
 // returned by HotSpotResolvedObjectTypeImpl.getInstanceFields(true)
-static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap* reg_map, ObjectValue* sv, int svIndex, oop obj, bool skip_internal) {
+static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap* reg_map, ObjectValue* sv, int svIndex, oop obj, bool skip_internal, JavaThread* thread) {
   if (klass->superklass() != NULL) {
-    svIndex = reassign_fields_by_klass(klass->superklass(), fr, reg_map, sv, svIndex, obj, skip_internal);
+    svIndex = reassign_fields_by_klass(klass->superklass(), fr, reg_map, sv, svIndex, obj, skip_internal, thread);
   }
 
   GrowableArray<ReassignedField>* fields = new GrowableArray<ReassignedField>();
@@ -996,7 +996,7 @@ static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap
   for (int i = 0; i < fields->length(); i++) {
     intptr_t val;
     ScopeValue* scope_field = sv->field_at(svIndex);
-    StackValue* value = StackValue::create_stack_value(fr, reg_map, scope_field);
+    StackValue* value = StackValue::create_stack_value(fr, reg_map, scope_field, thread);
     int offset = fields->at(i)._offset;
     BasicType type = fields->at(i)._type;
     switch (type) {
@@ -1038,7 +1038,7 @@ static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap
 
       case T_LONG: case T_DOUBLE: {
         assert(value->type() == T_INT, "Agreement.");
-        StackValue* low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++svIndex));
+        StackValue* low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++svIndex), thread);
 #ifdef _LP64
         jlong res = (jlong)low->get_int();
 #else
@@ -1086,7 +1086,7 @@ static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap
 }
 
 // restore fields of all eliminated objects and arrays
-void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects, bool realloc_failures, bool skip_internal) {
+void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects, bool realloc_failures, bool skip_internal, JavaThread* thread) {
   for (int i = 0; i < objects->length(); i++) {
     ObjectValue* sv = (ObjectValue*) objects->at(i);
     Klass* k = java_lang_Class::as_Klass(sv->klass()->as_ConstantOopReadValue()->value()());
@@ -1101,12 +1101,12 @@ void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableAr
 
     if (k->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(k);
-      reassign_fields_by_klass(ik, fr, reg_map, sv, 0, obj(), skip_internal);
+      reassign_fields_by_klass(ik, fr, reg_map, sv, 0, obj(), skip_internal, thread);
     } else if (k->is_typeArray_klass()) {
       TypeArrayKlass* ak = TypeArrayKlass::cast(k);
-      reassign_type_array_elements(fr, reg_map, sv, (typeArrayOop) obj(), ak->element_type());
+      reassign_type_array_elements(fr, reg_map, sv, (typeArrayOop) obj(), ak->element_type(), thread);
     } else if (k->is_objArray_klass()) {
-      reassign_object_array_elements(fr, reg_map, sv, (objArrayOop) obj());
+      reassign_object_array_elements(fr, reg_map, sv, (objArrayOop) obj(), thread);
     }
   }
 }

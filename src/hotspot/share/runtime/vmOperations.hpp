@@ -256,7 +256,6 @@ class VM_ThreadStop: public VM_Operation {
 
   // GC support
   void oops_do(OopClosure* f) {
-    // TODO fix public object leakage
     f->do_oop(&_thread); f->do_oop(&_throwable);
   }
 };

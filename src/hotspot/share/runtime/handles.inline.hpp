@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_RUNTIME_HANDLES_INLINE_HPP
 #define SHARE_VM_RUNTIME_HANDLES_INLINE_HPP
 
+#include "mmtk.h"
 #include "runtime/handles.hpp"
 #include "runtime/thread.inline.hpp"
 
@@ -39,7 +40,7 @@ inline Handle::Handle(Thread* thread, oop obj) {
     // VMThread roots need to be published, an assumption here is 
     // that it is at safepoint now 
     assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
-    ::mmtk_publish_object_with_fence(NULL, obj);
+    assert(mmtk_is_object_published(obj), "object shoud be public");
   }
 
 #endif

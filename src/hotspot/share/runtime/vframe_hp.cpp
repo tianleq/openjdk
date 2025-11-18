@@ -164,7 +164,7 @@ StackValueCollection* compiledVFrame::expressions() const {
 // rematerialization and relocking of non-escaping objects.
 
 StackValue *compiledVFrame::create_stack_value(ScopeValue *sv) const {
-  return StackValue::create_stack_value(&_fr, register_map(), sv);
+  return StackValue::create_stack_value(&_fr, register_map(), sv, _thread);
 }
 
 BasicLock* compiledVFrame::resolve_monitor_lock(Location location) const {

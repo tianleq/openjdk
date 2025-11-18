@@ -28,6 +28,7 @@
 #include "oops/oop.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/thread.hpp"
 #include "runtime/stackValue.hpp"
 #if INCLUDE_ZGC
 #include "gc/z/zBarrier.inline.hpp"
@@ -36,7 +37,7 @@
 #include "gc/shenandoah/shenandoahBarrierSet.hpp"
 #endif
 
-StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv) {
+StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv, JavaThread* _thread) {
   if (sv->is_location()) {
     // Stack or register value
     Location loc = ((LocationValue *)sv)->location();
@@ -117,6 +118,9 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
         val = ShenandoahBarrierSet::barrier_set()->load_reference_barrier(val);
       }
 #endif
+
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+#endif
       Handle h(Thread::current(), val); // Wrap a handle around the oop
       return new StackValue(h);
     }
@@ -142,6 +146,14 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
 #if INCLUDE_SHENANDOAHGC
       if (UseShenandoahGC) {
         val = ShenandoahBarrierSet::barrier_set()->load_reference_barrier(val);
+      }
+#endif
+#if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
+      if (Thread::current()->is_VM_thread() && UseThirdPartyHeap) {
+        // VMThread roots need to be published, an assumption here is 
+        // that it is at safepoint now 
+        assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
+        ::mmtk_publish_object_with_fence(_thread, val);
       }
 #endif
       Handle h(Thread::current(), val); // Wrap a handle around the oop
