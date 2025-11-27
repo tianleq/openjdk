@@ -40,7 +40,8 @@ inline Handle::Handle(Thread* thread, oop obj) {
     // VMThread roots need to be published, an assumption here is 
     // that it is at safepoint now 
     assert(SafepointSynchronize::is_at_safepoint(), "Try publishing objects unsafely");
-    assert(mmtk_is_object_published(obj), "object shoud be public");
+    // assert(mmtk_is_object_published(obj), "object shoud be public");
+    ::mmtk_publish_object_with_fence(NULL, obj);
   }
 
 #endif
