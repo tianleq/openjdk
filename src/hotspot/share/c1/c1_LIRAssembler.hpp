@@ -258,6 +258,8 @@ class LIR_Assembler: public CompilationResourceObj {
 
   void atomic_op(LIR_Code code, LIR_Opr src, LIR_Opr data, LIR_Opr dest, LIR_Opr tmp);
 
+  Address as_Address_ext(LIR_Address* addr) { return as_Address(addr); };
+
 #include CPU_HEADER(c1_LIRAssembler)
 
  public:
