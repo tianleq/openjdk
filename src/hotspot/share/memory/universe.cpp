@@ -400,13 +400,9 @@ void Universe::genesis(TRAPS) {
     oop p = tns();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
       assert(THREAD->is_Java_thread(), "thread is not a Java thread");
       JavaThread *thread = (JavaThread *) THREAD;
       ::mmtk_publish_object_with_fence(thread, p);
-#else
-      ::mmtk_publish_object_with_fence(p);
-#endif
     }
 #endif
     _the_null_sentinel = p;
@@ -566,12 +562,8 @@ void Universe::set_reference_pending_list(oop list) {
   assert_pll_ownership();
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
       JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
       ::mmtk_publish_object_with_fence(thread, list);
-#else
-      ::mmtk_publish_object_with_fence(list);
-#endif
     }
 #endif
   _reference_pending_list = list;
@@ -586,12 +578,8 @@ oop Universe::swap_reference_pending_list(oop list) {
   assert_pll_locked(is_locked);
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
     if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
       JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
       ::mmtk_publish_object_with_fence(thread, list);
-#else
-      ::mmtk_publish_object_with_fence(list);
-#endif
     }
 #endif
   return Atomic::xchg(list, &_reference_pending_list);
@@ -1096,10 +1084,8 @@ bool universe_post_init() {
 
 #ifdef MMTK_ENABLE_PUBLIC_BIT
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
     assert(THREAD->is_Java_thread(), "thread is not a Java thread");
     JavaThread *thread = (JavaThread *) THREAD;
-
     // publish root objects
     ::mmtk_publish_object_with_fence(thread, the_empty_class_klass_array);
     ::mmtk_publish_object_with_fence(thread, out_of_memory_error_java_heap);
@@ -1115,23 +1101,6 @@ bool universe_post_init() {
     ::mmtk_publish_object_with_fence(thread, virtual_machine_error_instance);
     ::mmtk_publish_object_with_fence(thread, vm_exception);
     ::mmtk_publish_object_with_fence(thread, preallocated_out_of_memory_error_array);
-#else
-    // publish root objects
-    ::mmtk_publish_object_with_fence(the_empty_class_klass_array);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_java_heap);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_metaspace);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_class_metaspace);
-    ::mmtk_publish_object_with_fence(delayed_stack_overflow_error_message);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_array_size);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_gc_overhead_limit);
-    ::mmtk_publish_object_with_fence(out_of_memory_error_realloc_objects);
-
-    ::mmtk_publish_object_with_fence(null_ptr_exception_instance);
-    ::mmtk_publish_object_with_fence(arithmetic_exception_instance);
-    ::mmtk_publish_object_with_fence(virtual_machine_error_instance);
-    ::mmtk_publish_object_with_fence(vm_exception);
-    ::mmtk_publish_object_with_fence(preallocated_out_of_memory_error_array);
-#endif
   }
 #endif
   Universe::_the_empty_class_klass_array = the_empty_class_klass_array;
@@ -1458,12 +1427,8 @@ void Universe::set_main_thread_group(oop group)
 { 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
     JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
     ::mmtk_publish_object_with_fence(thread, group);
-#else
-    ::mmtk_publish_object_with_fence(group);
-#endif
   }
 #endif
   _main_thread_group = group;
@@ -1473,12 +1438,8 @@ void Universe::set_system_thread_group(oop group)
 { 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
   if (UseThirdPartyHeap) {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
     JavaThread *thread = Thread::current()->is_Java_thread() ? (JavaThread *) Thread::current() : NULL;
     ::mmtk_publish_object_with_fence(thread, group);
-#else
-    ::mmtk_publish_object_with_fence(group);
-#endif
   }
 #endif
   _system_thread_group = group;
@@ -1601,18 +1562,12 @@ bool Universe::release_fullgc_alot_dummy() {
 
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_PUBLIC_BIT)
 extern "C" {
-#if defined(MMTK_ENABLE_DEBUG_THREAD_LOCAL_GC_COPYING)
+
   extern void mmtk_publish_object_with_fence(JavaThread* thread, void *object) {
     ::mmtk_publish_object(thread, object);
     // make sure the publishing occurs before the write
     OrderAccess::fence();
   }
-#else 
-  extern void mmtk_publish_object_with_fence(void *object) {
-    ::mmtk_publish_object(object);
-    // make sure the publishing occurs before the write
-    OrderAccess::fence();
-  }
-#endif
+
 }
 #endif
