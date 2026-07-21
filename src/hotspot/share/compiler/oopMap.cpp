@@ -252,10 +252,14 @@ static void add_derived_oop(oop* base, oop* derived, JavaThread* jt) {
   COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
 #if defined(INCLUDE_THIRD_PARTY_HEAP) && defined(MMTK_ENABLE_THREAD_LOCAL_GC)
-  // jt == NULL when it is coming from frame::verify, which will never be a local gc 
-  if (jt && jt->mmtk_thread_local_gc_active()) {
-    jt->ldpt->add(derived, base);
-    return;
+  // jt == NULL when it is coming from frame::verify, which will never be a local gc
+  if (jt) {
+    if (jt->mmtk_thread_local_gc_active()) {
+      jt->ldpt->add(derived, base);
+      return;
+    } else if (jt->mmtk_thread_local_gc_active_in_global_gc()) {
+      return;
+    }
   }
 #endif
 #if COMPILER2_OR_JVMCI
